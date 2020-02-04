@@ -1,32 +1,33 @@
-﻿using Google.Cloud.Firestore;
+﻿using Firebase.Auth;
+using Google.Cloud.Firestore;
+using Microsoft.AspNetCore.Authentication;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 
 namespace VeterinaryAppAPI
 {
-    public class MedicDataAccessLayer
+    public class MedicRepository
     {
-        string projectId;
         FirestoreDb fireStoreDb;
-        public MedicDataAccessLayer()
+        public MedicRepository(FirestoreDb firestoreDb)
         {
-            string filepath = "E:\\Licenta\\FrontendVeterinaryApp\\FrontendVeterinaryApp\\Server\\Credentials\\final-year-project-748be-2df9641c0d90.json";
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", filepath);
-            projectId = "final-year-project-748be";
-            fireStoreDb = FirestoreDb.Create(projectId);
+            // configuration has been moved to startup
+            this.fireStoreDb = firestoreDb;
         }
-        public async Task<List<Medic>> GetAllMedics()
+
+        public async Task<List<Client>> GetAllClientsAsync(string loggedUserId)
         {
             try
             {
                 Query MedicQuery = fireStoreDb.Collection("Medics");
                 QuerySnapshot MedicQuerySnapshot = await MedicQuery.GetSnapshotAsync();
-                List<Medic> lstMedic = new List<Medic>();
-                List<Client> lstClient = new List<Client>();
+                List<Client> lstClients = new List<Client>();
                 foreach (DocumentSnapshot documentSnapshot in MedicQuerySnapshot.Documents)
                 {
                     if (documentSnapshot.Exists)
@@ -35,10 +36,12 @@ namespace VeterinaryAppAPI
                         Dictionary<string, object> medic = documentSnapshot.ToDictionary();
                         string json = JsonConvert.SerializeObject(medic);
                         Medic newMedic = JsonConvert.DeserializeObject<Medic>(json);
-                        if (newMedic.Email.Equals("alex.andricsak@gmail.com") &&
-                            newMedic.Password.Equals("Alexiso97"))
+                        newMedic.Id = documentSnapshot.Id;
+                        
+                        if (newMedic.Id.Equals(loggedUserId))
                         {
-                            newMedic.Id = Convert.ToInt32(documentSnapshot.Id);
+                            
+                            // getting medic clients
                             CollectionReference Clients = fireStoreDb.Collection("Medics").Document(documentSnapshot.Id).Collection("Clients");
                             var result = Clients.GetSnapshotAsync().Result.Documents;
                             Console.WriteLine(result.Count);
@@ -46,21 +49,20 @@ namespace VeterinaryAppAPI
                             {
                                 if (item.Exists)
                                 {
+                                    
                                     Dictionary<string, object> client = item.ToDictionary();
                                     string jsonClient = JsonConvert.SerializeObject(client);
                                     Client newClient = JsonConvert.DeserializeObject<Client>(jsonClient);
-                                    newClient.Id = Convert.ToInt32(item.Id);
-                                    lstClient.Add(newClient);
+                                    newClient.Id = item.Id;
+                                    lstClients.Add(newClient);
                                 }
                             }
-                            newMedic.Clients = lstClient;
+                            break;
                         }
                         //newMedic = documentSnapshot.CreateTime.Value.ToDateTime();
-                        lstMedic.Add(newMedic);
                     }
                 }
-                List<Medic> sortedMedicList = lstMedic.OrderBy(x => x.Id).ToList();
-                return sortedMedicList;
+                return lstClients;
             }
             catch(Exception ex)
             {
@@ -68,6 +70,9 @@ namespace VeterinaryAppAPI
                 throw;
             }
         }
+
+        
+
 
         public async void AddMedic(Medic Medic)
         {
@@ -102,7 +107,7 @@ namespace VeterinaryAppAPI
                 if (snapshot.Exists)
                 {
                     Medic med = snapshot.ConvertTo<Medic>();
-                    med.Id = Convert.ToInt32(snapshot.Id);
+                    med.Id = snapshot.Id;
                     return med;
                 }
                 else
@@ -110,9 +115,10 @@ namespace VeterinaryAppAPI
                     return new Medic();
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                throw;
+                Console.WriteLine("Exception caught: " + ex.ToString());
+                return null;
             }
         }
         public async void DeleteMedic(string id)

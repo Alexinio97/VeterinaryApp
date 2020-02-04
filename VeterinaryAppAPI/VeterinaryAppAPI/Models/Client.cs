@@ -11,7 +11,7 @@ namespace VeterinaryAppAPI
     public class Client
     {
         [FirestoreDocumentId]
-        public int Id { get; set; }
+        public string Id { get; set; }
         [Required]
         [FirestoreProperty]
         public string FirstName { get; set; }

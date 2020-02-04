@@ -2,39 +2,19 @@ import {apiUrl} from '../config'
 import { authHeader} from '../helpers/auth-header';
 
 
-export const userService = {
-    login,
-    logout,
-    getAllClients
+export const animalService = {
+    getUsersAnimals
 }
 
-async function login(email,password){
-    const requestOptions = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email,password})
-    };
-    console.log(apiUrl);
-    return fetch(`${apiUrl}api/Medic/authenticate`,requestOptions)
-    .then(handleResponse)
-    .then(user => {
-        if(user)
-        {
-            user.authdata = window.btoa(email + ':' + password);
-            localStorage.setItem('user',JSON.stringify(user));
-        }
-        return user;
-    });
-}
 
-async function getAllClients() {
+async function getUsersAnimals(clientId) {
     
     const requestOptions = {
         method: 'GET',
         headers: authHeader(),
     };
     console.log(requestOptions.headers);
-    return fetch(`${apiUrl}api/Medic`, requestOptions).then(handleResponse);
+    return fetch(`${apiUrl}api/Animal/${clientId}/Animals`, requestOptions).then(handleResponse);
 }
 
 function logout() {

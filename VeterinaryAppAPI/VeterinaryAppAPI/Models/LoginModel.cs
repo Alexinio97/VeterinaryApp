@@ -8,7 +8,7 @@ namespace VeterinaryAppAPI.Models
 {
     public class LoginModel
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         [Required]
         public string Email { get; set; }
         [Required]

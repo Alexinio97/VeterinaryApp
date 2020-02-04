@@ -15,11 +15,11 @@ namespace VeterinaryAppAPI.Services
     {
         public async Task<LoginModel> Authenticate(string email, string password)
         {
-            var authProvider = new FirebaseAuthProvider(new FirebaseConfig("<API_KEY>"));
+            var authProvider = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyCkAWg2p5G7FIV4WFFRNWdhopm15LALxUQ"));
             try
             {
-                await authProvider.SignInWithEmailAndPasswordAsync(email, password);
-                LoginModel user = new LoginModel { Email = email };
+                var result = await authProvider.SignInWithEmailAndPasswordAsync(email, password);
+                LoginModel user = new LoginModel { Email = email ,Id = result.User.LocalId};
                 return user;
             }
             catch(Exception ex)

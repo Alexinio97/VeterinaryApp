@@ -12,7 +12,7 @@ namespace VeterinaryAppAPI
     public class Medic
     {
         [FirestoreDocumentId]
-        public int Id { get; set; }
+        public string Id { get; set; }
         [FirestoreProperty]
         public string FirstName { get; set; }
         [FirestoreProperty]

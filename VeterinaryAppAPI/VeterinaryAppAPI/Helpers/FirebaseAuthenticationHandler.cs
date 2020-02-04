@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
 using VeterinaryAppAPI.Models;
 using VeterinaryAppAPI.Services;
@@ -45,7 +46,6 @@ namespace VeterinaryAppAPI.Helpers
                 
                 var email = credentials[0];
                 var password = credentials[1];
-                user.Id = 1;
                 user = await _userService.Authenticate(email, password);
             }
             catch
@@ -62,7 +62,7 @@ namespace VeterinaryAppAPI.Helpers
             var claims = new[]
             {
                 
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(),
+                new Claim(ClaimTypes.NameIdentifier, user.Id,
                     ClaimTypes.Email,user.Email)
             };
             try
@@ -70,6 +70,7 @@ namespace VeterinaryAppAPI.Helpers
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
                 var principal = new ClaimsPrincipal(identity);
                 ticket = new AuthenticationTicket(principal, Scheme.Name);
+                
             }
             catch(Exception ex)
             {

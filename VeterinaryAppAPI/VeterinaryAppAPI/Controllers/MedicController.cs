@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -15,18 +16,21 @@ namespace VeterinaryAppAPI.Controllers
     [ApiController]
     public class MedicController : ControllerBase
     {
-        private MedicDataAccessLayer _medics = new MedicDataAccessLayer();
+        private MedicRepository _medics;
         private IUserService _userService;
-        public MedicController(IUserService userService)
+        public MedicController(IUserService userService,MedicRepository medics)
         {
             _userService = userService;
+            _medics = medics;
         }
 
         // GET: api/Medic
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var medics = await _medics.GetAllMedics();
+            var identity = (ClaimsIdentity)User.Identity;
+            var loggedUserId = identity.Claims.ToList().First().Value;
+            var medics = await _medics.GetAllClientsAsync(loggedUserId);
             return Ok(medics);
         }
 
