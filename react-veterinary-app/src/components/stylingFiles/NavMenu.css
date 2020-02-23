@@ -15,4 +15,12 @@ html {
 
 .box-shadow {
   box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+  background: rgb(142,136,232);
+  background: linear-gradient(90deg, rgba(142,136,232,1) 0%, rgba(26,207,192,0.30885857761073177) 75%, rgba(0,212,255,1) 100%);
+}
+
+@media (min-width: 1200px) {
+  .container{
+      max-width: 1440px;
+  }
 }

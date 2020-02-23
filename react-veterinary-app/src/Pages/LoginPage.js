@@ -1,56 +1,69 @@
 import React, {Component} from 'react';
 
-import { userService } from '../services/user.service';
+import { medicService } from '../services/medic.service';
 import {Card} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import {faLock} from '@fortawesome/free-solid-svg-icons';
+import {authService} from '../helpers/auth';
+import { Redirect } from 'react-router';
 
-class LoginPage extends Component {
+export class LoginPage extends Component {
+
     constructor(props){
         super(props);
-        userService.logout();
 
         this.state = {
             email: '',
             password: '',
             submitted: false,
             loading: false,
-            error: ''
+            error: '',
+            redirect: false,
         };
 
-        this.handleChange = this.handleChange.bind(this);
+        //this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleChange(e) {
-        const { name,value } = e.target;
-        this.setState({[name]: value});
-    }
+    // handleChange(e) {
+    //     const { name,value } = e.target;
+    //     this.setState({[name]: value});
+    // }
 
     handleSubmit(e) {
         e.preventDefault();
 
         this.setState({submitted: true});
-        const {email,password,returnUrl} = this.state;
+        const email = this.emailInput.value;
+        const password = this.passwordInput.value;
 
         if(!(email && password)){
             return;
         }
 
         this.setState({loading: true});
-        userService.login(email,password)
-        .then(
-            user => {
-                console.log(user); 
-                const{from} = this.props.location.state || {from: {pathname: "/"}};
-                this.props.history.push(from);
-            },
-            error => this.setState({error,loading: false})
-        );
+        authService.login(email,password)
+        .then( user => {
+            this.loginForm.reset()
+            this.props.setUserLoggedIn(user);
+            this.setState({redirect: true});
+        })
+        .catch( errorM => 
+            {
+   
+                console.log(errorM);
+                this.setState({error:"Invalid email/password",loading:false});
+            });
     }
 
     render() {
+        console.log(this.props);
+        console.log("Redirect is: " + this.state.redirect);
+        const { from } = this.props.location.state || { from: { pathname: '/' } }
+        if(this.state.redirect === true){
+            return <Redirect to={from}/>
+        }
         const { email, password, submitted, loading, error } = this.state;
 
         return (
@@ -58,15 +71,15 @@ class LoginPage extends Component {
                 <Card style={{width: "30rem",display: "flex",align: "center",justifyContent: "center",marginLeft: "auto",marginRight:"auto",marginTop: "15%"}}>
                 <Card.Header className="card-title text-center mb-4 mt-1"><h4>Sign in</h4></Card.Header>
                 <Card.Body>
-                    <form name="form" onSubmit={this.handleSubmit}>
+                    <form name="form" onSubmit={(event) => { this.handleSubmit(event) }} ref={(form) => { this.loginForm = form }}>
                         <div className={'form-group' + (submitted && !email ? ' has-error' : '')}>
                             <div className="input-group">
                                 <div className="input-group-prepend">
                                     <span className="input-group-text"><FontAwesomeIcon icon={faEnvelope} size={ "lg" } /></span>
                                 </div>
-                                <input type="text" className="form-control" name="email" value={email} onChange={this.handleChange} placeholder="Enter email"/>
+                                <input type="text" className="form-control" name="email" ref={(input) => { this.emailInput = input }} placeholder="Enter email"/>
                             </div>
-                            {submitted && !email &&
+                            {submitted && !this.emailInput &&
                                 <div className="help-block">Email is required!</div>
                             }
                             </div>
@@ -75,9 +88,9 @@ class LoginPage extends Component {
                                     <div className="input-group-prepend">
                                         <span className="input-group-text"><FontAwesomeIcon icon={faLock} size={ "lg" } /></span>
                                     </div>
-                                    <input type="password" className="form-control" name="password" value={password} onChange={this.handleChange} placeholder="*****"/>
+                                    <input type="password" className="form-control" name="password" ref={(input) => { this.passwordInput = input }} placeholder="*****"/>
                                 </div>
-                            {submitted && !password &&
+                            {submitted && !this.passwordInput &&
                                 <div className="help-block">Password is required</div>
                             }
                         </div>
@@ -98,4 +111,3 @@ class LoginPage extends Component {
     }
 }
 
-export {LoginPage};

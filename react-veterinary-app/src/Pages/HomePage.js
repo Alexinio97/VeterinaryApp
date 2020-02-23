@@ -1,38 +1,59 @@
 import React, {Component} from 'react';
 import { Link } from 'react-router-dom';
+import { Spinner } from 'reactstrap';
+import { medicService } from '../services/medic.service';
 
-import { userService } from '../services/user.service';
-
-class HomePage extends Component {
+export class HomePage extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            user: {},
-            users: []
+            medic: null,
+            loading: false
         };
+        this.componentDidMount = this.componentDidMount.bind(this);
     }
 
-    componentDidMount() {
-        this.setState({ 
-            user: JSON.parse(localStorage.getItem('user')),
-            users: { loading: true }
-        });
+    async componentDidMount()
+    {
+        console.log(this.props);
+        var medicLogged = null;
+        if(this.props.medic !== undefined)
+        {
+            medicLogged = await medicService.getMedicData(this.props.medic.uid);
+            console.log(medicLogged);
+            this.setState({ 
+                medic: medicLogged,
+                loading: false
+            });
+        }
+        else
+        {
+            console.log("got undefined");
+            medicLogged = "medic";
+        }
+        
+    }
+
+    renderMedicData()
+    {
+
+        const medic = this.state.medic;
+        
+        return(
+            <h1 className="text-center">Welcome, medic!</h1>
+        );
     }
 
     render() {
-        const { user, users } = this.state;
-        return (
-            <div className="col-md-6 col-md-offset-3">
-                <h1>Hi {user.email}!</h1>
-                <p>You're logged in with React & Basic HTTP Authentication!!</p>
-                <h3>Users from secure api end point:</h3>
-                <p>
-                    <Link to="/login">Logout</Link>
-                </p>
-            </div>
+        let contents = this.state.loading
+        ? <Spinner animation="border" variant="primary">
+            <span className="sr-only">Loading...</span>
+            </Spinner>
+        : this.renderMedicData()
+        return(
+            contents
         );
     }
 }
 
-export {HomePage};

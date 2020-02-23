@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { userService } from "../../services/user.service";
+import { medicService } from "../../services/medic.service";
 import { Spinner, Button, NavLink } from 'reactstrap';
 import { Link } from 'react-router-dom';
 
@@ -29,12 +29,12 @@ export class FetchClients extends Component {
         </thead>
         <tbody>
           {clients.map(client =>
-            <tr key={client.id}>
-              <td>{client.firstName}</td>
-              <td>{client.lastName}</td>
-              <td>{client.email}</td>
+            <tr key={client.Id}>
+              <td>{client.FirstName}</td>
+              <td>{client.LastName}</td>
+              <td>{client.Email}</td>
               <td>             
-                <Link to={`userAnimals/${client.lastName}/${client.id}`}>
+                <Link to={`userAnimals/${client.LastName}/${client.Id}`}>
                   <Button className="btn btn-primary">View Animals</Button>
                 </Link>             
               </td>
@@ -62,6 +62,7 @@ export class FetchClients extends Component {
   }
 
   async populateClientsData() {
-    userService.getAllClients().then(clients => this.setState({ clients,loading: false }));
+    await medicService.getAllClients().then(clients => this.setState({ clients,loading: false }));
+    console.log(this.state.clients);
   }
 }
