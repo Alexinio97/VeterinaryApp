@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {format,addMonths,subMonths, startOfWeek, addDays, startOfMonth, 
-    endOfMonth, endOfWeek, isSameMonth, isSameDay, parse, parseISO} from 'date-fns';
+    endOfMonth, endOfWeek, isSameMonth, isSameDay} from 'date-fns';
 import './stylingFiles/Calendar.css';
 import{faChevronLeft,faChevronRight}  from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,15 +12,18 @@ export class Calendar extends Component{
             currentMonth: new Date(),
             selectedDate: new Date()
         };
+        this.prevMonth = this.prevMonth.bind(this);
+        this.nextMonth = this.nextMonth.bind(this);
     }
 
-    nextMonth = () => {
+    nextMonth(){
+        console.log("Current month is: " + this.state.currentMonth);
         this.setState({
             currentMonth: addMonths(this.state.currentMonth,1), 
         })
     }
 
-    prevMonth = () => {
+    prevMonth(){
         this.setState({
             currentMonth: subMonths(this.state.currentMonth,1),
         })
@@ -32,7 +35,7 @@ export class Calendar extends Component{
         return(
             <div className="header row flex-middle">
                 <div className="col col-start">
-                    <div className="icon" onClick={this.prevMonth}>
+                    <div className="icon" onClick={ () => this.prevMonth()}>
                     <FontAwesomeIcon icon={faChevronLeft}/>
                     </div>
                 </div>
@@ -41,7 +44,7 @@ export class Calendar extends Component{
                         {format(this.state.currentMonth,dateFormat)}
                     </span>
                 </div>
-                <div className="col col-end" onClick={this.nextMonth}>
+                <div className="col col-end" onClick={() => this.nextMonth()}>
                     <div className="icon"><FontAwesomeIcon icon={faChevronRight}/></div>
                 </div>
             </div>
@@ -83,15 +86,14 @@ export class Calendar extends Component{
             for(let i = 0; i<7;i++){
                 formattedDate = format(day,dateFormat);
                 const cloneDay = day.toLocaleDateString();
+                let disabledDay = !isSameMonth(day,monthStart) ? "disabled" : isSameDay(day, selectedDate) ? "selected" : "";
                 days.push(
                     <div 
-                        className={`col cell ${
-                            !isSameMonth(day,monthStart)
-                            ? "disabled" 
-                            :  isSameDay(day, selectedDate) ? "selected" : ""
+                        // so that we can't access past days
+                        className={`col cell ${(addDays(day,1) < new Date()) ? "disabled" : disabledDay
                         }`}
                         key={day}
-                        onClick={ () => this.onDateClick(parse(cloneDay,'mm/dd/yyyy',new Date()))}
+                        onClick={ () => this.onDateClick(new Date(cloneDay))}
                         >
                         <span className="number">{formattedDate}</span>
                         <span className="bg">{formattedDate}</span>
@@ -110,9 +112,11 @@ export class Calendar extends Component{
     }
 
     onDateClick = day => {
+        console.log(day);
         this.setState({
             selectedDate: day
         })
+        this.props.handleClickDate(day);
     }
 
     render() {

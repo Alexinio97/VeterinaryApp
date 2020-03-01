@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
-import { Link } from 'react-router-dom';
 import { Spinner } from 'reactstrap';
 import { medicService } from '../services/medic.service';
+import {auth} from 'firebase';
 
 export class HomePage extends Component {
     constructor(props) {
@@ -16,21 +16,22 @@ export class HomePage extends Component {
 
     async componentDidMount()
     {
-        console.log(this.props);
-        var medicLogged = null;
-        if(this.props.medic !== undefined)
+        if(auth().currentUser !==null)
         {
-            medicLogged = await medicService.getMedicData(this.props.medic.uid);
-            console.log(medicLogged);
-            this.setState({ 
-                medic: medicLogged,
-                loading: false
-            });
+            var medicLoggedId = auth().currentUser.uid;
+            console.log(this.state.medic);
+            if(medicLoggedId !== null && this.state.medic === null)
+            {
+                let medicLogged = await medicService.getMedicData(medicLoggedId);
+                console.log(medicLogged);
+                this.setState({ 
+                    medic: medicLogged,
+                    loading: false
+                });
+            }
         }
-        else
-        {
-            console.log("got undefined");
-            medicLogged = "medic";
+        else{
+            console.log("User not logged in.");
         }
         
     }
@@ -41,7 +42,7 @@ export class HomePage extends Component {
         const medic = this.state.medic;
         
         return(
-            <h1 className="text-center">Welcome, medic!</h1>
+            <h1 className="text-center">Welcome, {(medic !== null) ? medic.FirstName: ""}!</h1>
         );
     }
 

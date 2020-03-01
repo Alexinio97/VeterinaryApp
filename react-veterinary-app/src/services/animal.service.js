@@ -22,7 +22,7 @@ async function getUsersAnimals(clientId) {
         });
         console.log(animals);
         return animals;
-    }).catch( err => console.log(err));
+    }).catch( err => console.log("Error caught: " + err));
 }
 
 async function UpdateAnimal(animal,clientId) {

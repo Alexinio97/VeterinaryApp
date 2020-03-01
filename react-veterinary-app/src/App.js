@@ -1,6 +1,6 @@
-import logo from './logo.svg';
+
 import './App.css';
-import { Route, Switch } from 'react-router';
+import { Route } from 'react-router';
 import React, {Component} from 'react';
 import {HomePage } from '../src/Pages/HomePage';
 import {LoginPage} from '../src/Pages/LoginPage';
@@ -11,8 +11,7 @@ import { Appointments} from './components/DataFetch/FetchAppointments';
 import { auth } from 'firebase';
 import { Logout } from './Pages/Logout';
 import { PrivateRoute } from './components/PrivateRoute';
-import { BrowserRouter } from 'react-router-dom';
-
+import { AnimalPage } from './Pages/AnimalPage';
 
 export default class App extends Component {
     constructor(props) {
@@ -27,10 +26,7 @@ export default class App extends Component {
     
       this.setUserLoggedIn = this.setUserLoggedIn.bind(this);
   }
-  updateModal(isVisible) {
-    this.state.isVisible = isVisible;
-    this.forceUpdate();
-  }
+
 
   componentDidMount(){
     this.removeAuthListener = auth().onAuthStateChanged( user => {
@@ -54,10 +50,6 @@ export default class App extends Component {
     this.removeAuthListener();
   }
 
-  updateModal(isVisible) {
-    this.state.isVisible = isVisible;
-    this.forceUpdate();
-  }
 
   async setUserLoggedIn(response){
     if(response) {
@@ -76,10 +68,15 @@ export default class App extends Component {
     }
   }
 
-  renderNavBar()
-  {
-    return(
-      <Layout>
+  
+
+  render() {
+    console.log("From appjs: " + this.state.isLoggedIn);
+    let content = (this.state.isLoggedIn ) ? <Layout/> : '';
+    return (
+      <div className="App">
+        {content} 
+        <Route exact path="/logout" component={Logout} />
         <PrivateRoute  exact path="/"   authenticated={this.state.isLoggedIn} component={HomePage} medic={this.state.currentUser} />
         <PrivateRoute  exact path="/fetchClients"  authenticated={this.state.isLoggedIn} component={FetchClients} />
         <PrivateRoute  exact path="/appointments"  authenticated={this.state.isLoggedIn} component={Appointments} />
@@ -87,19 +84,14 @@ export default class App extends Component {
         authenticated={this.state.isLoggedIn}
         path="/userAnimals/:clientName/:clientId" 
         component={FetchUsersAnimals} name="userAnimals"/>
-      </Layout>
-    );
-  }
-
-  render() {
-    console.log("From appjs: " + this.state.isLoggedIn);
-    let content = (this.state.isLoggedIn ) ? this.renderNavBar() : '';
-    return (
-      <div className="App">
-        <Route exact path="/login" render={props => {
-         return <LoginPage setUserLoggedIn={this.setUserLoggedIn} {...props}/>}}/>
-        <Route exact path="/logout" component={Logout} />
-        {content}   
+        <Route exact path="/login" render={(props) => {
+                  return <LoginPage setUserLoggedIn={this.setUserLoggedIn} authenticated={this.state.isLoggedIn} {...props} />
+                }} />
+        <PrivateRoute exact 
+        path="/animalPage" 
+        component={AnimalPage}
+        authenticated={this.state.isLoggedIn} 
+        name="animalPage"/>
       </div> 
       )
   }

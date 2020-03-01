@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Modal,Button,InputGroup,FormControl} from 'react-bootstrap';
-import { Table } from 'react-bootstrap';
+import { Modal,Button} from 'react-bootstrap';
 import { Form } from 'react-bootstrap';
 
 export default class ModalAddAnimal extends Component{
@@ -26,9 +25,10 @@ export default class ModalAddAnimal extends Component{
 
     componentWillReceiveProps(nextProps) {
         var animalReceived = nextProps.animal;
+        console.log(animalReceived);
         if(animalReceived !== null)
         { 
-            console.log("Setting props");
+            
             this.setState({
             Id: animalReceived.Id,
             Name: animalReceived.Name,
@@ -36,6 +36,16 @@ export default class ModalAddAnimal extends Component{
             Breed: animalReceived.Breed,
             Species: animalReceived.Species,
             Neutered: animalReceived.Neutered,
+        });
+    }
+    else{
+        this.setState({
+            Id:'',
+            Name: '',
+            Age: '',
+            Breed: '',
+            Species: '0',
+            Neutered: '0',
         });
     }
 }
@@ -60,10 +70,11 @@ export default class ModalAddAnimal extends Component{
     }
 
     render(){
+        let animalEditOrAdd = (this.props.animal === null) ? "Add" : "Edit";
         return(
         <Modal {...this.props}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit animal details</Modal.Title>
+          <Modal.Title>{animalEditOrAdd} animal</Modal.Title>
         </Modal.Header>
         <Modal.Body>
         <div>
@@ -85,7 +96,7 @@ export default class ModalAddAnimal extends Component{
                 <Form.Control as="select"  name="Species" value={this.state.Species} onChange={this.handleChange}>
                     <option value='0'>Dog</option>
                     <option value='1'>Cat</option>
-                    <option value='2'>Reptile</option>
+                    <option value='2'>Bird</option>
                 </Form.Control>
             </Form.Group>
             <Form.Group controlId="formGroupNeutered">

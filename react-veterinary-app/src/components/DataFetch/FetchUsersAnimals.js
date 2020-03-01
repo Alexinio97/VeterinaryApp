@@ -4,10 +4,10 @@ import { Spinner, Button, Table } from 'reactstrap';
 import { faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { faPlusSquare,faDove,faDog,faCat } from '@fortawesome/free-solid-svg-icons';
 import ModalAddAnimal from './ModalAddAnimal';
 import { Modal } from 'react-bootstrap';
-import {db} from '../../firebaseConfig/config';
+import { Link } from 'react-router-dom';
 
 
 
@@ -22,6 +22,8 @@ export class FetchUsersAnimals extends Component {
       showModal:false,
       deleteModal: false,
       animaltoDelete: null,
+      animalProfile: null,
+      clientId: this.props.match.params.clientId,
     }; 
 
     this.renderAnimalsData = this.renderAnimalsData.bind(this);
@@ -89,14 +91,19 @@ async confirmDelete()
   await this.populatetUsersAnimals();
 }
 
+checkAnimalType(animalType){
+   var typeArr = [faDog,faCat,faDove];
+   return typeArr[animalType];
+}
 
 renderAnimalsData(animals) {
   var species = [ "Dog","Cat","Reptile"];
   var neutered = [ "Yes","No"];
   return (
-    <Table className="table">
+    <Table className="table table-hover" style={{width:"80%",marginLeft:"auto",marginRight:"auto"}}>
       <thead className="thead-dark">
         <tr>
+          <th scope="col">Profile</th>
           <th scope="col">Name</th>
           <th scope="col">Age</th>
           <th scope="col">Breed</th>
@@ -107,14 +114,22 @@ renderAnimalsData(animals) {
       </thead>
       <tbody>
       {animals.map(animal =>
-          <tr key={animal.Id}>
+          <tr   key={animal.Id}>
+          <td className="link" title="View animal profile">
+            <Link to={{
+              pathname: '/animalPage',
+              state: {clientId: this.state.clientId,animal: animal}
+            }}>
+              <FontAwesomeIcon icon={this.checkAnimalType(animal.Species)} size="2x"/> 
+            </Link>
+          </td>
             <td>{animal.Name}</td>
             <td>{animal.Age}</td>
             <td>{animal.Breed}</td>
             <td>{species[animal.Species]}</td>
             <td>{neutered[animal.Neutered]}</td>
             <td>
-              <button className="btn" title="Edit" data-toggle="modal" data-target="#editModal" onClick={ () => this.handleShow(animal)}
+              <button className="btn" title="Edit" data-toggle="modal" data-target="#editModal" onClick={ () => this.handleShow({animalProfile:animal})}
                 ><FontAwesomeIcon icon={faEdit} color="blue"/>
               </button> 
               <button className="btn" title="Delete" data-toggle="modal" data-target="#deleteModal" onClick= { () => this.setState(this.setState({
@@ -159,15 +174,16 @@ renderAnimalsData(animals) {
         onHide={deleteModalClose}
         show={this.state.deleteModal}
     />
-        
       </div>
     );
 
   }
 
   async populatetUsersAnimals() {
-    var clientId = this.props.match.params.clientId;
-    await animalService.getUsersAnimals(clientId).then( animals => this.setState({animals,loading: false}));
+    var clientId = this.state.clientId;
+    console.log(clientId);
+    await animalService.getUsersAnimals(clientId).then( animals => this.setState({animals,loading: false}))
+    .catch(errorM => console.log("Error occured:  "+ errorM.message));
     console.log(this.state.animals);
   }
 }

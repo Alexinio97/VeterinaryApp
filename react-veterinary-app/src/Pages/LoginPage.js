@@ -1,18 +1,17 @@
 import React, {Component} from 'react';
 
-import { medicService } from '../services/medic.service';
 import {Card} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import {faLock} from '@fortawesome/free-solid-svg-icons';
 import {authService} from '../helpers/auth';
 import { Redirect } from 'react-router';
+import { Spinner } from 'reactstrap';
 
 export class LoginPage extends Component {
 
     constructor(props){
         super(props);
-
         this.state = {
             email: '',
             password: '',
@@ -30,6 +29,15 @@ export class LoginPage extends Component {
     //     const { name,value } = e.target;
     //     this.setState({[name]: value});
     // }
+    componentDidMount(){
+        this.setState({redirect: this.props.authenticated});
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if(prevProps.authenticated !== this.props.authenticated){
+            this.setState({redirect: this.props.authenticated});
+        }
+    }
 
     handleSubmit(e) {
         e.preventDefault();
@@ -44,22 +52,21 @@ export class LoginPage extends Component {
 
         this.setState({loading: true});
         authService.login(email,password)
-        .then( user => {
+        .then(user => {
             this.loginForm.reset()
             this.props.setUserLoggedIn(user);
             this.setState({redirect: true});
+
         })
         .catch( errorM => 
             {
-   
                 console.log(errorM);
+                authService.logout();
                 this.setState({error:"Invalid email/password",loading:false});
             });
     }
 
     render() {
-        console.log(this.props);
-        console.log("Redirect is: " + this.state.redirect);
         const { from } = this.props.location.state || { from: { pathname: '/' } }
         if(this.state.redirect === true){
             return <Redirect to={from}/>
@@ -97,7 +104,7 @@ export class LoginPage extends Component {
                         <div className="form-group">
                             <button className="btn btn-primary" disabled={loading}>Login</button>
                             {loading &&
-                                <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
+                                <Spinner animation="border" variant="primary"></Spinner>
                             }
                         </div>
                         {error &&

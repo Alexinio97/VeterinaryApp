@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { medicService } from "../../services/medic.service";
-import { Spinner, Button, NavLink } from 'reactstrap';
+import { Spinner, Button } from 'reactstrap';
 import { Link } from 'react-router-dom';
 
 // component that fetches the clients of the medic logged in
@@ -18,7 +18,7 @@ export class FetchClients extends Component {
 
   static renderClientsTable(clients) {
     return (
-      <table className='table table-bordered table-white' aria-labelledby="clients">
+      <table className='table table-bordered table-white ' aria-labelledby="clients" style={{width:"80%",marginLeft:"auto",marginRight:"auto"}}>
         <thead>
           <tr>
             <th>First Name</th>

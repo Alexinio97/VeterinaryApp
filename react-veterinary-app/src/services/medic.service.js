@@ -1,12 +1,13 @@
 
 import { db } from '../firebaseConfig/config';
 import { auth } from 'firebase';
-
+import {format, fromUnixTime, addDays, set} from 'date-fns';
 export const medicService = {
     login,
     // logout,
     getAllClients,
-    getMedicData
+    getMedicData,
+    getAppointments
 }
 
 async function login(email,password){
@@ -31,10 +32,28 @@ async function getAllClients() {
 
 async function getMedicData(Id)
 {
-    console.log("id is: " + Id);
     return db.collection('Medics').doc(Id).get().then( querySnapshot => {
         var medic = querySnapshot.data();
         return medic;
+    }).catch( err => console.log(err));
+}
+
+async function getAppointments(day)
+{
+    day = set(day,{hours:0,minutes:0,seconds:0});
+
+    let endDate = addDays(day,1);
+    let appointments = [];
+    let medicId = auth().currentUser.uid;
+    let appointmentsRef = db.collection('Medics').doc(medicId).collection("Appointments");
+    return appointmentsRef.where("startTime",">=",day).where("startTime","<",endDate)
+    .get().then( querySnapshot => {
+        querySnapshot.forEach( appointment =>{
+            let newAppointment = appointment.data();
+            newAppointment["Id"] = appointment.id;
+            appointments.push(newAppointment);
+        });
+        return appointments;
     }).catch( err => console.log(err));
 }
 
