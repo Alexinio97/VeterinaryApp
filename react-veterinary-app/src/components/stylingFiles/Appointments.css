@@ -1,0 +1,27 @@
+.appointment table {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    margin-left: auto;
+    margin-right: auto;
+    width: 90%;
+}
+
+.appointment table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.appointment th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: center;
+    background-color: rgb(95, 114, 96);
+    color: rgb(255, 255, 255);
+  }
+
+#spinnerApp {
+    position: relative;
+    top: 20%;
+    left: 20%;
+    right: 20%;
+}
