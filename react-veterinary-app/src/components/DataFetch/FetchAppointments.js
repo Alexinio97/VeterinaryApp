@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
 import {Calendar} from '../Calendar';
-import {format, differenceInHours ,formatDistance, addHours, getHours, fromUnixTime, subDays} from 'date-fns';
-import '../stylingFiles/Appointments.css';
+import {format, differenceInHours , addHours, getHours, fromUnixTime} from 'date-fns';
+import '../stylingComponents/Appointments.css';
 import { medicService } from '../../services/medic.service';
 import { Spinner } from 'react-bootstrap';
+import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import AppointmentAdd from './ModalAddAppointment';
+import { PopoverHeader, PopoverBody, UncontrolledPopover} from 'reactstrap';
+import { Button } from 'react-bootstrap';
 
 export class Appointments extends Component{
     constructor(props){
@@ -66,10 +71,15 @@ export class TodayAppointments extends Component{
             startHour: new Date(0,0,0,8,0,0),
             finishHour: new Date(0,0,0,16,30,0),
             appointments: [],
+            hourClicked: null,
+            showAddModal:false,
             loading: true,
+            clients:[],
         }
         this.renderHours = this.renderHours.bind(this);
+        this.handleAppointmentSave = this.handleAppointmentSave.bind(this);
     }
+
 
     async populateAppointments(dayClicked)
     {
@@ -83,10 +93,11 @@ export class TodayAppointments extends Component{
     componentDidUpdate(prevProps, prevState) {
         if(prevProps.selectedDay!==this.props.selectedDay){
             this.populateAppointments(this.props.selectedDay);
-    }
+        }
     }
 
     renderHours(){
+        console.log("Rerender hours");
         let appointments = this.state.appointments;
         let rows = []
         let fullProgram = differenceInHours(this.state.finishHour,this.state.startHour,{includeSeconds:true});
@@ -94,14 +105,38 @@ export class TodayAppointments extends Component{
 
         for(let hour = 0; hour <= fullProgram; hour++){
             let formattedHour = format(currentHour,"H - aaaa");
+            let tableData = "";
+            appointments.map(appointment => {
+                if(getHours(fromUnixTime(appointment.startTime.seconds)) === getHours(currentHour))
+                {   
+                    let convertedDate = new Date(fromUnixTime(appointment.startTime.seconds));
+                    // note: tag id's can't start with numbers!
+                    tableData = <div><Button type="button" variant="outline-success" id={"s"+appointment.Id}>{appointment.type}</Button>
+                    <UncontrolledPopover placement="right" trigger="focus" target={"s"+appointment.Id}>
+                        <PopoverHeader>{appointment.animalName} appointment</PopoverHeader>
+                        <PopoverBody>
+                            Appointment starts at: {format(convertedDate,"H.mm - aaaa")}<br/>
+                            Duration is: {appointment.duration} minutes<br/>
+                            Observations: {appointment.observations}
+                        </PopoverBody>
+                    </UncontrolledPopover>
+                    </div>; 
+
+                }
+            });
+            console.log(tableData);
             rows.push(
                 <tr>
                     <td>{formattedHour}</td>
+                    {(appointments.length > 0) ?
                     <td>
-                    {appointments.map(appointment =>
-                    (getHours(fromUnixTime(appointment.startTime.seconds)) === getHours(currentHour)) ? appointment.type : ""
-                    )}
+                        {(tableData !== "") ? tableData : 
+                        <button className="btn" onClick={() => this.showAppointmentModal(formattedHour)}><FontAwesomeIcon icon={faPlusSquare} size="lg" color="blue" title="Make appointment"/></button> }
+                    </td> :
+                    <td>
+                    <button className="btn" onClick={() => this.showAppointmentModal(formattedHour)}><FontAwesomeIcon icon={faPlusSquare} size="lg" color="blue" title="Make appointment"/></button>
                     </td>
+                }
                 </tr>
             );
             currentHour = addHours(currentHour,1);
@@ -109,7 +144,25 @@ export class TodayAppointments extends Component{
         return <tbody>{rows}</tbody>
     }
 
+    async handleAppointmentSave(appointment){
+        this.setState({showAddModal:false});
+        await medicService.addAppointment(appointment);
+        alert("Appointment made!")
+        await this.populateAppointments(this.props.selectedDay);
+    }
+
+    showAppointmentModal(hourClicked){
+
+        console.log("Button clicked" + hourClicked);
+        this.setState({
+            hourClicked:hourClicked,
+            showAddModal:true,
+        })
+    }
+
     render() {
+        let modalClose = () => this.setState({showAddModal:false})
+
         return(
             <div className="appointment">
                 <table>
@@ -124,6 +177,13 @@ export class TodayAppointments extends Component{
                     </Spinner>
                     : this.renderHours()}
                 </table>
+                <AppointmentAdd
+                    currentHour={this.state.hourClicked}
+                    selectedDay={this.props.selectedDay}
+                    show={this.state.showAddModal}
+                    handleAppointmentSave={this.handleAppointmentSave}
+                    onHide={modalClose}
+                />
             </div>
         );
     }

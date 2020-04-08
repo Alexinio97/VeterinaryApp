@@ -4,10 +4,11 @@ import { Spinner, Button, Table } from 'reactstrap';
 import { faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPlusSquare,faDove,faDog,faCat } from '@fortawesome/free-solid-svg-icons';
+import { faPlusSquare,faDog,faCat } from '@fortawesome/free-solid-svg-icons';
 import ModalAddAnimal from './ModalAddAnimal';
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { storage } from '../../firebaseConfig/config';
 
 
 
@@ -22,7 +23,6 @@ export class FetchUsersAnimals extends Component {
       showModal:false,
       deleteModal: false,
       animaltoDelete: null,
-      animalProfile: null,
       clientId: this.props.match.params.clientId,
     }; 
 
@@ -47,10 +47,8 @@ editModalAnimal(animal){
 
 handleShow(animalEdit)
 {
-  this.setState({animaltoEdit: animalEdit});
-  this.setState({
-    showModal : true
-  });
+  console.log(animalEdit);
+  this.setState({animaltoEdit: animalEdit,showModal : true});
 }
 
 handleAdd()
@@ -66,9 +64,32 @@ async saveAnimalChanges(animal) {
   // updating animal to database
   animal.Age = Number(animal.Age);
   animal.Neutered = Number(animal.Neutered);
-  animal.Species = Number(animal.Species)
+  animal.Species = Number(animal.Species);
+  if(typeof(animal.Photo) !== String)
+  {
+    await this.uploadPhoto(animal.Photo);
+    animal.Photo = animal.Photo.name;
+  }
   await animalService.UpdateAnimal(animal,this.props.match.params.clientId);
   await this.populatetUsersAnimals();
+}
+
+async uploadPhoto(photo){
+  if(photo !== null)
+  {
+    let uploadTask = storage.ref(`animalProfilePics/${photo.name}`).put(photo);
+
+    uploadTask.on('state_changed', snapshot => {
+      let progress = (snapshot.bytesTransferred/snapshot.totalBytes) * 100;
+      console.log('Upload is ' + progress + '% done');
+    },function(error) {
+      console.log("Error uploading file: " + error.message);
+    },function() {
+      uploadTask.snapshot.ref.getDownloadURL().then(function(donwloadUrl) {
+        console.log('File available at', donwloadUrl);
+      });
+    });
+  }
 }
 
 async saveNewAnimal(animal){
@@ -78,6 +99,11 @@ async saveNewAnimal(animal){
     animal.Age = Number(animal.Age);
     animal.Neutered = Number(animal.Neutered);
     animal.Species = Number(animal.Species);
+    if(animal.Photo !== null)
+    {
+      await this.uploadPhoto(animal.Photo);
+      animal.Photo = animal.Photo.name;
+    }
     await animalService.AddAnimal(animal,this.props.match.params.clientId);
     await this.populatetUsersAnimals();
 }
@@ -92,7 +118,7 @@ async confirmDelete()
 }
 
 checkAnimalType(animalType){
-   var typeArr = [faDog,faCat,faDove];
+   var typeArr = [faDog,faCat];
    return typeArr[animalType];
 }
 
@@ -118,7 +144,7 @@ renderAnimalsData(animals) {
           <td className="link" title="View animal profile">
             <Link to={{
               pathname: '/animalPage',
-              state: {clientId: this.state.clientId,animal: animal}
+              state: {clientId: this.state.clientId,animal: animal,clientName:this.props.match.params.clientName}
             }}>
               <FontAwesomeIcon icon={this.checkAnimalType(animal.Species)} size="2x"/> 
             </Link>
@@ -129,7 +155,7 @@ renderAnimalsData(animals) {
             <td>{species[animal.Species]}</td>
             <td>{neutered[animal.Neutered]}</td>
             <td>
-              <button className="btn" title="Edit" data-toggle="modal" data-target="#editModal" onClick={ () => this.handleShow({animalProfile:animal})}
+              <button className="btn" title="Edit" data-toggle="modal" data-target="#editModal" onClick={ () => this.handleShow({animaltoEdit:animal})}
                 ><FontAwesomeIcon icon={faEdit} color="blue"/>
               </button> 
               <button className="btn" title="Delete" data-toggle="modal" data-target="#deleteModal" onClick= { () => this.setState(this.setState({
@@ -181,10 +207,8 @@ renderAnimalsData(animals) {
 
   async populatetUsersAnimals() {
     var clientId = this.state.clientId;
-    console.log(clientId);
     await animalService.getUsersAnimals(clientId).then( animals => this.setState({animals,loading: false}))
     .catch(errorM => console.log("Error occured:  "+ errorM.message));
-    console.log(this.state.animals);
   }
 }
 

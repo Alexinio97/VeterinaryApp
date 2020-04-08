@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {format,addMonths,subMonths, startOfWeek, addDays, startOfMonth, 
     endOfMonth, endOfWeek, isSameMonth, isSameDay} from 'date-fns';
-import './stylingFiles/Calendar.css';
+import './stylingComponents/Calendar.css';
 import{faChevronLeft,faChevronRight}  from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 

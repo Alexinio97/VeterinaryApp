@@ -1,0 +1,33 @@
+.profileData {
+    width: 25%;
+    position: relative;
+    margin-left: 1%;
+    float: left;
+}
+
+
+.form-group{
+    margin-top: 8%;
+}
+
+.form-label{
+    font-style: oblique;
+}
+
+img {
+    height: 35%;
+    width: 30%;
+}
+
+.history{
+    height: 60%;
+    width: 60%;
+    position: relative;
+    margin-right: 5%;
+    float: right;
+}
+
+h5 {
+    margin-bottom: 2%;
+    text-align: left;
+}

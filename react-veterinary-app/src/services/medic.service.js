@@ -1,13 +1,14 @@
 
 import { db } from '../firebaseConfig/config';
 import { auth } from 'firebase';
-import {format, fromUnixTime, addDays, set} from 'date-fns';
+import { addDays, set} from 'date-fns';
 export const medicService = {
     login,
     // logout,
     getAllClients,
     getMedicData,
-    getAppointments
+    getAppointments,
+    addAppointment
 }
 
 async function login(email,password){
@@ -55,6 +56,17 @@ async function getAppointments(day)
         });
         return appointments;
     }).catch( err => console.log(err));
+}
+
+async function addAppointment(appointment){
+    console.log(appointment);
+    //delete appointment['Id'];
+    let medicId = auth().currentUser.uid;
+    return db.collection('Medics').doc(medicId).collection("Appointments").add(appointment).then(function() {
+        console.log("Document successfully written!");
+    }).catch(function(error) {
+        console.error("Error updating document: ", error);
+    });
 }
 
 // function logout(state) {        

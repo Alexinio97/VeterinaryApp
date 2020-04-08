@@ -25,3 +25,14 @@
     left: 20%;
     right: 20%;
 }
+
+.appointmentModal {
+    width:70vw;   /* Occupy the 70% of the screen width */
+    max-width: 70vw;
+}
+
+.form-group{
+    margin-bottom: 2%!important;
+    margin-top: 2%!important;
+}
+

@@ -55,6 +55,7 @@ async function DeleteAnimal(animalId,clientId)
     });
 }
 
+
 // function logout() {
 //     localStorage.removeItem('user');
 // }
