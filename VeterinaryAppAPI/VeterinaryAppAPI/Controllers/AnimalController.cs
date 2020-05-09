@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +24,7 @@ namespace VeterinaryAppAPI.Controllers
         {
             _animalsRepo = animalRepo;
             _userService = userService;
+                   
         }
         
         // GET: api/Animal 
@@ -50,22 +52,62 @@ namespace VeterinaryAppAPI.Controllers
             return Ok(animal);
         }
 
+
+
         // POST: api/Animal
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("{clientId}")]
+        public IActionResult Post(string clientId,[FromBody] Animal animal)
         {
+            try
+            {
+                var identity = (ClaimsIdentity)User.Identity;
+                var loggedUserId = identity.Claims.ToList().First().Value;
+                _animalsRepo.AddAnimal(animal,loggedUserId,clientId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception caught: " + ex.ToString());
+                return BadRequest(ex.ToString());
+            }
         }
 
+        // Update method
+        //Adding an animal to a client
         // PUT: api/Animal/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut("{clientId}")]
+        public IActionResult Put(string clientId,[FromBody] Animal animal)
         {
+            try
+            {
+                var identity = (ClaimsIdentity)User.Identity;
+                var loggedUserId = identity.Claims.ToList().First().Value;
+                _animalsRepo.UpdateAnimal(animal,loggedUserId,clientId);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Exception caught: " + ex.ToString());
+                return BadRequest(ex.ToString());
+            }
+            
         }
 
         // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete("{clientId}/{animalId}")]
+        public async Task<IActionResult> DeleteAsync(string clientId,string animalId)
         {
+            try
+            {
+                var identity = (ClaimsIdentity)User.Identity;
+                var loggedUserId = identity.Claims.ToList().First().Value;
+                await _animalsRepo.DeleteAnimalAsync(animalId, loggedUserId, clientId);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.ToString());
+            }
         }
     }
 }

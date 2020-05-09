@@ -36,3 +36,16 @@
     margin-top: 2%!important;
 }
 
+/* styling for appointments on homepage.js */
+.upcoming-appointments{
+    float: left;
+    position: relative;
+    margin-left: 2%;
+    margin-top: 1%;
+}
+
+/* for scrolling the upcoming appointments */
+.scroll{
+    max-height: 35vw;
+    overflow-y: auto;
+}

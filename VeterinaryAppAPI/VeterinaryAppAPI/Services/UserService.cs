@@ -15,7 +15,7 @@ namespace VeterinaryAppAPI.Services
     {
         public async Task<LoginModel> Authenticate(string email, string password)
         {
-            var authProvider = new FirebaseAuthProvider(new FirebaseConfig("<API_KEY>"));
+            var authProvider = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyCkAWg2p5G7FIV4WFFRNWdhopm15LALxUQ"));
             try
             {
                 var result = await authProvider.SignInWithEmailAndPasswordAsync(email, password);

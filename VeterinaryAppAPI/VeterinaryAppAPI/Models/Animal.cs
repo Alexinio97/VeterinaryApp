@@ -6,6 +6,17 @@ using System.Threading.Tasks;
 
 namespace VeterinaryAppAPI
 {
+    public enum Neutered
+    {
+        Yes,
+        No
+    }
+    public enum Species
+    {
+        Dog,
+        Cat,
+        Reptile
+    }
 
     [FirestoreData]
     public class Animal
@@ -19,8 +30,8 @@ namespace VeterinaryAppAPI
         [FirestoreProperty]
         public int Age { get; set; }
         [FirestoreProperty]
-        public string Neutered { get; set; }
+        public Neutered Neutered { get; set; }
         [FirestoreProperty]
-        public string Species { get; set; }
+        public Species Species { get; set; }
     }
 }

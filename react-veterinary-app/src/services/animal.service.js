@@ -1,5 +1,6 @@
 import { db } from '../firebaseConfig/config';
 import { auth } from 'firebase';
+import { fromUnixTime } from 'date-fns';
 
 const medicId = localStorage.getItem("medicId");
 
@@ -7,13 +8,13 @@ export const animalService = {
     getUsersAnimals,
     UpdateAnimal,
     DeleteAnimal,
-    AddAnimal
+    AddAnimal,
+    getAnimalAppointments,
 }
 
 
 async function getUsersAnimals(clientId) {
     var animals = []
-    console.log("Client id is: "+ auth().currentUser.uid);
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").get().then( querySnapshot => {
         querySnapshot.forEach(function(doc) {
             var newAnimal = doc.data();
@@ -36,7 +37,6 @@ async function UpdateAnimal(animal,clientId) {
 }
 
 async function AddAnimal(animal,clientId) {
-    console.log(animal);
     delete animal['Id'];
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").add(animal).then(function() {
         console.log("Document successfully written!");
@@ -47,12 +47,32 @@ async function AddAnimal(animal,clientId) {
 
 async function DeleteAnimal(animalId,clientId)
 {
-    console.log(animalId);
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").doc(animalId).delete().then(function() {
         console.log("Document successfully deleted!");
     }).catch(function(error) {
         console.error("Error removing document: ", error);
     });
+}
+
+
+// method that returns animal appointments that have been executed already
+async function getAnimalAppointments(clientId,animalName){
+    let appointments = [];
+    let appointmentsRef = db.collection('Medics').doc(medicId).collection("Appointments");
+    
+    return appointmentsRef.where("animalName","==",animalName).where("clientId","==",clientId)
+    .get().then( querySnapshot => {
+        querySnapshot.forEach( appointment =>{
+            let oldAppointment = appointment.data();
+            let convertedAppointment = new Date(fromUnixTime(oldAppointment.endTime.seconds));
+            if(convertedAppointment < new Date())
+            {
+                oldAppointment["Id"] = appointment.id;
+                appointments.push(oldAppointment);
+            }
+        });
+        return appointments;
+    }).catch( err => console.error("Error caught!",err));
 }
 
 

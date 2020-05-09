@@ -87,10 +87,11 @@ export class Calendar extends Component{
                 formattedDate = format(day,dateFormat);
                 const cloneDay = day.toLocaleDateString();
                 let disabledDay = !isSameMonth(day,monthStart) ? "disabled" : isSameDay(day, selectedDate) ? "selected" : "";
+                let disabledWekend = (this.props.disabledWeekends && (i === 0 || i === 6)) ? true : false;
                 days.push(
                     <div 
                         // so that we can't access past days
-                        className={`col cell ${(addDays(day,1) < new Date()) ? "disabled" : disabledDay
+                        className={`col cell ${(addDays(day,1) < new Date() || disabledWekend) ? "disabled" : disabledDay
                         }`}
                         key={day}
                         onClick={ () => this.onDateClick(new Date(cloneDay))}

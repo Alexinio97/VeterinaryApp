@@ -24,3 +24,7 @@ html {
       max-width: 1440px;
   }
 }
+
+.counter.counter-lg {
+  top: -5px !important;
+}

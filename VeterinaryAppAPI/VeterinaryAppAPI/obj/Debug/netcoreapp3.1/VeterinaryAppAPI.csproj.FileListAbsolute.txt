@@ -221,10 +221,10 @@ E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\bin\Debug\netcoreapp3
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.csprojAssemblyReference.cache
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\staticwebassets\VeterinaryAppAPI.StaticWebAssets.Manifest.cache
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\staticwebassets\VeterinaryAppAPI.StaticWebAssets.xml
-E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.MvcApplicationPartsAssemblyInfo.cache
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.AssemblyInfoInputs.cache
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.AssemblyInfo.cs
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.RazorTargetAssemblyInfo.cache
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.csproj.CopyComplete
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.dll
 E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.pdb
+E:\Licenta\VeterinaryApp\VeterinaryAppAPI\VeterinaryAppAPI\obj\Debug\netcoreapp3.1\VeterinaryAppAPI.MvcApplicationPartsAssemblyInfo.cache

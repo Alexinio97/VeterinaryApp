@@ -12,6 +12,9 @@ import { auth } from 'firebase';
 import { Logout } from './Pages/Logout';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AnimalPage } from './Pages/AnimalPage';
+import { ProfilePage } from './Pages/ProfilePage';
+import { Settings } from './Pages/SettingsPage';
+import { Inventory } from './components/DataFetch/FetchInventory';
 
 export default class App extends Component {
     constructor(props) {
@@ -80,6 +83,9 @@ export default class App extends Component {
         <PrivateRoute  exact path="/"   authenticated={this.state.isLoggedIn} component={HomePage} medic={this.state.currentUser} />
         <PrivateRoute  exact path="/fetchClients"  authenticated={this.state.isLoggedIn} component={FetchClients} />
         <PrivateRoute  exact path="/appointments"  authenticated={this.state.isLoggedIn} component={Appointments} />
+        <PrivateRoute  exact path="/profile"  authenticated={this.state.isLoggedIn} component={ProfilePage} />
+        <PrivateRoute  exact path="/settings"  authenticated={this.state.isLoggedIn} component={Settings} />
+        <PrivateRoute exact path="/inventory" authenticated={this.state.isLoggedIn} component={Inventory} />
         <PrivateRoute  exact 
         authenticated={this.state.isLoggedIn}
         path="/userAnimals/:clientName/:clientId" 

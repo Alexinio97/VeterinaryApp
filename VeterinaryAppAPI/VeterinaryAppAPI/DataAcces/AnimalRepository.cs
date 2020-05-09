@@ -59,5 +59,49 @@ namespace VeterinaryAppAPI.DataAcces
                 return null;
             }
         }
+
+        public async void AddAnimal(Animal animal,string loggedUserId,string clientId)
+        {
+            try
+            {
+                CollectionReference colRef = _firestoreDb.Collection("Medics").Document(loggedUserId).Collection("Clients")
+                    .Document(clientId).Collection("Animals");
+                await colRef.AddAsync(animal);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task DeleteAnimalAsync(string animalId, string loggedUserId,string clientId)
+        {
+            try
+            {
+                DocumentReference animalToDelete = _firestoreDb.Collection("Medics").Document(loggedUserId).Collection("Clients")
+                    .Document(clientId).Collection("Animals").Document(animalId);
+                await animalToDelete.DeleteAsync();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Exception caught: " + ex.ToString());
+                throw;
+            }
+        }
+
+        public async void UpdateAnimal(Animal animal,string loggedUserId,string clientId)
+        {
+            try
+            {
+                DocumentReference animalToUpdate = _firestoreDb.Collection("Medics").Document(loggedUserId).Collection("Clients")
+                    .Document(clientId).Collection("Animals").Document(animal.Id);
+                await animalToUpdate.SetAsync(animal, SetOptions.Overwrite);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Exception caught: " + ex.ToString());
+                throw;
+            }
+        }
     }
 }

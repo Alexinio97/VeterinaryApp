@@ -1,185 +1,244 @@
 import React, { Component } from 'react';
-import {Calendar} from '../Calendar';
 import {format, differenceInHours , addHours, getHours, fromUnixTime} from 'date-fns';
 import '../stylingComponents/Appointments.css';
 import { medicService } from '../../services/medic.service';
 import { Spinner } from 'react-bootstrap';
-import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { faTrash ,faTimes} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AppointmentAdd from './ModalAddAppointment';
 import { PopoverHeader, PopoverBody, UncontrolledPopover} from 'reactstrap';
 import { Button } from 'react-bootstrap';
+import { ScheduleComponent, Inject, Day, WorkWeek, Month, ViewDirective, ViewsDirective} from '@syncfusion/ej2-react-schedule';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+
 
 export class Appointments extends Component{
     constructor(props){
         super(props);
         this.state ={
             clickedDay:new Date(),
-            Appointments:'',
+            appointments:[],
+            disabledWeekEnds:false,
+            showAddModal:false,
+            hourClicked:null,
+            selectedDay:null,
+            loading:true,
+            deleteModal:false,
+            appointToDelete: null,
+            startHour:null,
+            finishHour:null,
         }
-        this.handleClickDate = this.handleClickDate.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.makeAppointment = this.makeAppointment.bind(this);
+        this.handleAppointmentSave = this.handleAppointmentSave.bind(this);
+        this.showDeleteDialog = this.showDeleteDialog.bind(this);
+        this.handleDelete = this.handleDelete.bind(this);
+    }
+    componentDidMount(){
+        this.setMedicSchedule();
+        this.populateAppointments();
+    }
+
+    async populateAppointments(){
+        // get upcoming appointments for all month
+        await medicService.GetAppointmentsFuture().then(appoints => this.setState({appointments:appoints,loading:false}));
     }
 
 
-    handleDateClick = (arg) => { // bind with an arrow function
-        alert(arg.dateStr)
+    handleClick(event){
+
+        this.setState({[event.name]: event.checked});
     }
-    disableWeekends(maxDate)
-    {
-        var today = new Date();
-        var weekends = [];
-        for (var d = today; d <= maxDate; d.setDate(d.getDate() + 1)) {
-            if( d.getDay() === 0 || d.getDay() === 6)
+
+    makeAppointment(e){
+        console.log(e);
+        var selectedDay = new Date(e.startTime);
+        if(selectedDay.getHours() == 0)
+            return;
+        let endTime = new Date(e.endTime);
+        console.log("End time: !!!!!!!!" ,endTime);
+        var isSlotOccupied = false;
+        this.state.appointments.map( appoint => {
+            let dateAppointStart = new Date(fromUnixTime(appoint.startTime.seconds));
+            let dateAppointEnd = new Date(fromUnixTime(appoint.endTime.seconds));
+            if(dateAppointStart.getTime() === selectedDay.getTime() || dateAppointEnd.getTime() === endTime.getTime())
             {
-                weekends.push(new Date(d));
+                alert("There is an appointment there already!");
+                isSlotOccupied = true;
             }
+        });
+        if(isSlotOccupied === true)
+            return;
+        this.setState({showAddModal:true,selectedDay:selectedDay,hourClicked:selectedDay.getHours()});
+    }
+
+    onPopUpOpen(args){
+        if(args.data.Subject === undefined){
+            args.cancel = true;
         }
-        return weekends;
+        else
+        {
+            args.cancel = false;
+        }
     }
-
-    
-
-    handleClickDate(day){
-        this.setState({clickedDay: day});
-    }
-    render(){
-        let formattedClickedDay = format(this.state.clickedDay,"EEE - d LLL");
-        return(
-            <div>
-                <div style={{float: "left",width:"60%",marginRight:"auto",marginLeft:"auto"}}>
-                    <Calendar
-                     handleClickDate={this.handleClickDate}
-                     value={this.state}
-                    />
+    header(props) {
+        console.log(props);
+        return (<div>
+      {props.elementType === 'cell' ?
+            <div className="e-cell-header">
+            <div className="e-header-icon-wrapper">
+              <Button className="btn-primary">Ceva</Button>
+            </div>
+          </div> :
+            <div className="e-event-header">
+            <div className="row"> 
+                <div className="col">
+                    <h4>{props.Subject}</h4>
                 </div>
-                <div className="text-center" style={{ float: "right",width: "40%"}}>
-                    <h3>{formattedClickedDay}</h3>
-                    <TodayAppointments
-                        selectedDay={this.state.clickedDay}
-                    />
+                <div className=".col-md-3 .offset-md-3">
+                    <button className="btn" title="Delete" onClick={() => this.showDeleteDialog(props)}>
+                        <FontAwesomeIcon icon={faTrash} color="white" />
+                    </button>
+                </div>
+                <div className="col-md-auto">
+                    <div className="e-header-icon-wrapper">
+                        <button className="e-close" title="close"></button>
+                    </div>
                 </div>
             </div>
-        );
-    }
-}
-
-
-export class TodayAppointments extends Component{
-    constructor(props){
-        super(props)
-        this.state = {
-            startHour: new Date(0,0,0,8,0,0),
-            finishHour: new Date(0,0,0,16,30,0),
-            appointments: [],
-            hourClicked: null,
-            showAddModal:false,
-            loading: true,
-            clients:[],
-        }
-        this.renderHours = this.renderHours.bind(this);
-        this.handleAppointmentSave = this.handleAppointmentSave.bind(this);
-    }
-
-
-    async populateAppointments(dayClicked)
-    {
-        await medicService.getAppointments(dayClicked).then(appointments => this.setState({appointments:appointments,loading:false}));
-    }
-    componentDidMount()
-    {
-        this.populateAppointments(this.props.selectedDay);
+            
+          </div>}
+    </div>);
     }
     
-    componentDidUpdate(prevProps, prevState) {
-        if(prevProps.selectedDay!==this.props.selectedDay){
-            this.populateAppointments(this.props.selectedDay);
-        }
+    showDeleteDialog(props){
+        if(this.state.deleteModal === false)  
+            this.setState({deleteModal:true,appointToDelete:props.Id});
     }
 
-    renderHours(){
-        console.log("Rerender hours");
-        let appointments = this.state.appointments;
-        let rows = []
-        let fullProgram = differenceInHours(this.state.finishHour,this.state.startHour,{includeSeconds:true});
-        let currentHour = this.state.startHour;
+    async handleDelete(){
+        await medicService.deleteAppointment(this.state.appointToDelete);
+        this.populateAppointments();
+        this.setState({deleteModal:false});
+    }
 
-        for(let hour = 0; hour <= fullProgram; hour++){
-            let formattedHour = format(currentHour,"H - aaaa");
-            let tableData = "";
-            appointments.map(appointment => {
-                if(getHours(fromUnixTime(appointment.startTime.seconds)) === getHours(currentHour))
-                {   
-                    let convertedDate = new Date(fromUnixTime(appointment.startTime.seconds));
-                    // note: tag id's can't start with numbers!
-                    tableData = <div><Button type="button" variant="outline-success" id={"s"+appointment.Id}>{appointment.type}</Button>
-                    <UncontrolledPopover placement="right" trigger="focus" target={"s"+appointment.Id}>
-                        <PopoverHeader>{appointment.animalName} appointment</PopoverHeader>
-                        <PopoverBody>
-                            Appointment starts at: {format(convertedDate,"H.mm - aaaa")}<br/>
-                            Duration is: {appointment.duration} minutes<br/>
-                            Observations: {appointment.observations}
-                        </PopoverBody>
-                    </UncontrolledPopover>
-                    </div>; 
-
-                }
-            });
-            console.log(tableData);
-            rows.push(
-                <tr>
-                    <td>{formattedHour}</td>
-                    {(appointments.length > 0) ?
-                    <td>
-                        {(tableData !== "") ? tableData : 
-                        <button className="btn" onClick={() => this.showAppointmentModal(formattedHour)}><FontAwesomeIcon icon={faPlusSquare} size="lg" color="blue" title="Make appointment"/></button> }
-                    </td> :
-                    <td>
-                    <button className="btn" onClick={() => this.showAppointmentModal(formattedHour)}><FontAwesomeIcon icon={faPlusSquare} size="lg" color="blue" title="Make appointment"/></button>
-                    </td>
-                }
-                </tr>
-            );
-            currentHour = addHours(currentHour,1);
-        }
-        return <tbody>{rows}</tbody>
+    renderDeleteDialog(){
+        return(
+            <Dialog
+                open={this.state.deleteModal}
+                onClose={() => this.setState({deleteModal:false})}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">Delete Appointment</DialogTitle>
+                <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                    Are you sure you want to delete this appointment?
+                </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                <Button onClick={() => this.setState({deleteModal:false})} color="primary">
+                    No
+                </Button>
+                <Button onClick={this.handleDelete} color="primary" autoFocus>
+                    Yes
+                </Button>
+                </DialogActions>
+            </Dialog>
+        )
     }
 
     async handleAppointmentSave(appointment){
+        // TODO: send notification to client
         this.setState({showAddModal:false});
         await medicService.addAppointment(appointment);
         alert("Appointment made!")
-        await this.populateAppointments(this.props.selectedDay);
+        this.sendAppointmentNotification(appointment);
+        await this.populateAppointments(this.state.selectedDay);
     }
 
-    showAppointmentModal(hourClicked){
+    async sendAppointmentNotification(appointment){
+        let token = "<user_token/s>";
+        const FIREBASE_API_KEY = "<server_key>";
+        const message = {
+         registration_ids: [token], 
+          notification: {
+            title: "Daily Vet",
+            body: "New appointment at " + format(appointment.startTime,"dd/MM/yyyy k:mm a"),
+            "vibrate": 1,
+            "sound": 1,
+            "show_in_foreground": true,
+            "priority": "high",
+            "content_available": true,
+          },
+          data: {
+            title: "Daily Vet",
+            body: "IND chose to bat",
+          }
+        };
+      
+        let headers = new Headers({
+          "Content-Type": "application/json",
+          "Authorization": "key=" + FIREBASE_API_KEY
+        });
+      
+        let response = await fetch("https://fcm.googleapis.com/fcm/send", { method: "POST", headers, body: JSON.stringify(message) })
+        response = await response.json();
+    }
 
-        console.log("Button clicked" + hourClicked);
-        this.setState({
-            hourClicked:hourClicked,
-            showAddModal:true,
+    async setMedicSchedule(){
+        await medicService.getMedicData().then(medic => {
+            console.log(medic.Schedule);
+            this.setState({
+            startHour:medic.Schedule.start,
+            finishHour:medic.Schedule.end
+            })
         })
     }
 
-    render() {
-        let modalClose = () => this.setState({showAddModal:false})
+    renderScheduler(){
+        let scheduleAppointments = [];
+
+        this.state.appointments.map( appoint => {
+            let scheduleApp = {
+                Id: appoint.Id,
+                Subject: appoint.type +", " + appoint.animalName,
+                StartTime: new Date(fromUnixTime(appoint.startTime.seconds)),
+                EndTime: new Date(fromUnixTime(appoint.endTime.seconds)),
+                Description: appoint.observations,
+            }
+            scheduleAppointments.push(scheduleApp);
+        });
 
         return(
-            <div className="appointment">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Hour</th>
-                            <th>Appointment</th>
-                        </tr>
-                    </thead>
-                    {(this.state.loading) ? <Spinner id="spinnerApp" animation="border" variant="primary">
-                        <span className="sr-only">Loading...</span>
-                    </Spinner>
-                    : this.renderHours()}
-                </table>
+            <ScheduleComponent startHour={this.state.startHour} endHour={this.state.finishHour} cellClick={this.makeAppointment}
+                    popupOpen={this.onPopUpOpen}
+                    quickInfoTemplates={{header: this.header.bind(this)}}
+                    eventSettings={{dataSource:scheduleAppointments}}>
+                        <ViewsDirective>
+                            <ViewDirective option='Day'/>
+                            <ViewDirective option='WorkWeek'/>
+                            <ViewDirective option='Month'/>
+                        </ViewsDirective>
+                        <Inject services={[Day,WorkWeek,Month]}/>
+                    </ScheduleComponent>
+        )
+    }
+
+    render(){
+        let modalClose = () => this.setState({showAddModal:false})
+        return(
+            <div>
+                <div className="page-header"><h1>Appointments</h1></div>
+                <div className="container">
+                {this.state.loading ? <Spinner animation="border" variant="primary">
+                                    <span className="sr-only">Loading...</span>
+                            </Spinner> : this.renderScheduler() }
+                </div>
+                {this.renderDeleteDialog()}
                 <AppointmentAdd
                     currentHour={this.state.hourClicked}
-                    selectedDay={this.props.selectedDay}
+                    selectedDay={this.state.selectedDay}
                     show={this.state.showAddModal}
                     handleAppointmentSave={this.handleAppointmentSave}
                     onHide={modalClose}
@@ -188,3 +247,10 @@ export class TodayAppointments extends Component{
         );
     }
 }
+
+
+
+    
+
+
+    

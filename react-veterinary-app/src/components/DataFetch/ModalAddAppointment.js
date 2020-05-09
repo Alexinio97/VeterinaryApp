@@ -7,6 +7,7 @@ import { Button } from 'react-bootstrap';
 import  { animalService } from '../../services/animal.service';
 import { send, init } from 'emailjs-com';
 import { auth } from 'firebase';
+
 export default class AppointmentAdd extends Component{
 
     constructor(props){
@@ -23,6 +24,8 @@ export default class AppointmentAdd extends Component{
             type:null,
             displayDate:null,
             observations:null,
+            appTypes:[],
+            price:null,
         }
         this.populateClientAnimals = this.populateClientAnimals.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -32,13 +35,15 @@ export default class AppointmentAdd extends Component{
     
     componentDidMount(){
         this.populateClients();
-        
+        this.populateAppTypes();
     }
 
     componentDidUpdate(prevProps){
         if(prevProps !== this.props){
-            let constructedAppointment = "";
-            constructedAppointment = new Date(this.state.selectedDay);
+            let constructedAppointment = null;
+            console.log(this.props.selectedDay);
+            constructedAppointment = new Date(this.props.selectedDay);
+            console.log(constructedAppointment);
             if(this.props.startHour !== undefined){
                 constructedAppointment.setHours(Number(this.props.startHour.replace( /^\D+/g, ''))); // replace all leading non-digits with nothing
             }
@@ -51,6 +56,9 @@ export default class AppointmentAdd extends Component{
                 appointmentToMake: constructedAppointment,
                 animalSelected:animalSelected,
                 clientSelected:this.state.clients[0].Id,
+                duration:this.state.appTypes[0].duration,
+                price:this.state.appTypes[0].price,
+                type:this.state.appTypes[0].type,
             });
         }
     }
@@ -61,17 +69,31 @@ export default class AppointmentAdd extends Component{
     }
     
     async populateClientAnimals(clientId){
-       await animalService.getUsersAnimals(clientId).then(animals => this.setState({clientAnimals:animals}));
+       await animalService.getUsersAnimals(clientId).then(animals => this.setState({clientAnimals:animals,animalSelected:animals[0]}));
+    }
+
+    async populateAppTypes(){
+        await medicService.getAppointmentTypes().then(appTypes => this.setState({appTypes:appTypes}))
     }
     
     // handlers
     handleChange(e) {
         const {name,value,key} = e.target;
-        console.log(key);
+        // populate select with client animals
         if(name === "clientSelected")
         {
             this.populateClientAnimals(value);
             this.setState({[name]:value});
+        }
+        else if(name === "type"){
+            // populate duration default value
+            console.log(value);
+            this.state.appTypes.map(appType => {
+                if(value === appType.type)
+                {
+                    this.setState({[name]:value,duration:appType.duration,price:appType.price});
+                }
+            })
         }
         else{
             this.setState({[name]:value});
@@ -81,33 +103,32 @@ export default class AppointmentAdd extends Component{
     async handleSave(){
         let appointmentDate = this.state.appointmentToMake;
         let animalName = null;
-        appointmentDate.setHours(this.state.startHour.split(' ')[0]);
-        appointmentDate.setMinutes(0); 
-        appointmentDate.setSeconds(0);
+        
         console.log(this.state.duration);
         let endTime = addMinutes(appointmentDate,Number(this.state.duration));
         if(this.state.animalSelected.Name === undefined)
         {
             animalName = this.state.animalSelected;
+            
         }
         else
         {
             animalName = this.state.animalSelected.Name;
         }
-
+       
         const appointment = {
             animalName:animalName,
             clientId:this.state.clientSelected,
             duration:Number(this.state.duration),
             startTime:appointmentDate,
             endTime:endTime,
+            price:this.state.price,
             type:this.state.type,
             observations:(this.state.observations === null || this.state.observations === "" ) ? "None" : this.state.observations,
         }
         console.log(appointment);
-        
         // email data(subject,message,name)
-        const template_id = "<>";
+        const template_id = "template_4vGIGTGo";
         // TODO: add phone number for medic as a new field in firestore
         let msgBody = `"<p style="font-size: 16px;"></p>
                     <p>Appointment starts at: ` + new Date(appointment.startTime) + `<p>
@@ -117,8 +138,7 @@ export default class AppointmentAdd extends Component{
                     <p>If you have any questions don't hesitate to call: 073432255.<p> 
                     `
         // get medic and client email + name
-        let medicId = auth().currentUser.uid;
-        let medicLogged = await medicService.getMedicData(medicId);
+        let medicLogged = await medicService.getMedicData();
 
         console.log(medicLogged);
         let receiver = {email:null,firstName:null}
@@ -129,8 +149,8 @@ export default class AppointmentAdd extends Component{
                 receiver.firstName = client.FirstName
             }
         });
-        this.sendAppointmentMail(template_id,{message_html: msgBody, from_name:medicLogged.FirstName+", "+medicLogged.LastName , 
-                    send_to: receiver.email, to_name:receiver.firstName});
+        // this.sendAppointmentMail(template_id,{message_html: msgBody, from_name:medicLogged.FirstName+", "+medicLogged.LastName , 
+        //             send_to: receiver.email, to_name:receiver.firstName});
 
         this.props.handleAppointmentSave(appointment);
     }
@@ -138,7 +158,7 @@ export default class AppointmentAdd extends Component{
     // here we use emailjs.com trial with only 200 mails available
     // it's like a smtp mail server
     sendAppointmentMail(templateId,variables){
-        init("<>");
+        init("user_eKsNevhY0rE3RrUz8qv14");
         send('gmail',templateId,variables).then(res =>{
             console.log('Email sent successfully!')
         }).catch(err => console.error('Email send failed,error message: ', err));
@@ -167,13 +187,22 @@ export default class AppointmentAdd extends Component{
                 }
             </Form.Group>
             <Form.Group>
+                <Form.Label>Appointment type</Form.Label>
+                <Form.Control as="select" name="type" value={this.state.type} onChange={this.handleChange}>
+                    {this.state.appTypes.map(appType =>
+                        <option value={appType.type}>{appType.type}</option>
+                    )}
+                </Form.Control>
+            </Form.Group>
+            <Form.Group>
                 <Form.Label>Duration:</Form.Label>
                 <Form.Control type="number" name="duration" value={this.state.duration}  onChange={this.handleChange}>
                 </Form.Control>
             </Form.Group>
             <Form.Group>
-                <Form.Label>Appointment type</Form.Label>
-                <Form.Control type="text" name="type" value={this.state.type} onChange={this.handleChange}></Form.Control>
+                <Form.Label>Price(euro):</Form.Label>
+                <Form.Control type="number" name="price" value={this.state.price}  onChange={this.handleChange}>
+                </Form.Control>
             </Form.Group>
             <Form.Group>
                 <Form.Label>Observations</Form.Label>
@@ -189,7 +218,7 @@ export default class AppointmentAdd extends Component{
         let appointmentContent = (this.state.clients.length !==0) ? this.renderFormModal() : ""
         if(this.state.startHour !== null)
         {
-            displayDate = format(this.state.selectedDay,"dd MMM") + " " + this.state.startHour;
+            displayDate = format(this.state.selectedDay,"dd MMM k:mm a");
         }
         return(
         <Modal {...this.props} dialogClassName="appointmentModal">

@@ -72,8 +72,6 @@ namespace VeterinaryAppAPI
         }
 
         
-
-
         public async void AddMedic(Medic Medic)
         {
             try
