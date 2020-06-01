@@ -1,4 +1,4 @@
-import { db, storage } from '../firebaseConfig/config';
+import { db } from '../firebaseConfig/config';
 import { auth } from 'firebase';
 
 export const inventoryService = {

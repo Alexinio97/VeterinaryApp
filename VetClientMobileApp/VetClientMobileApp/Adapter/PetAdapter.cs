@@ -37,7 +37,7 @@ namespace VetClientMobileApp.Adapter
             if (view == null)
                 view = _context.LayoutInflater.Inflate(Resource.Layout.pet_item, null);
             view.FindViewById<TextView>(Resource.Id.txtNamePet).Text = _animals[position].Name;
-            view.FindViewById<TextView>(Resource.Id.txtAgePet).Text = "Age: " + _animals[position].Age.ToString();
+            view.FindViewById<TextView>(Resource.Id.txtAgePet).Text = "Varsta: " + _animals[position].Age.ToString();
 
             return view;
         }

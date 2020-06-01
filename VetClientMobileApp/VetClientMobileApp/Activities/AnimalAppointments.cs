@@ -34,12 +34,14 @@ namespace VetClientMobileApp.Activities
         private Client clientLogged;
         private ScheduleAppointmentCollection _appointments;
         private SfSchedule _scheduler;
+        private readonly FirebaseFunctionsService _functionsService;
 
         public AnimalAppointments()
         {
             _storageService = new StorageService();
             _userService = new UserService();
             _consultType = new AppointmentCategory();
+            _functionsService = new FirebaseFunctionsService(this, this);
         }
         protected override async void OnCreate(Bundle savedInstanceState)
         {
@@ -119,7 +121,7 @@ namespace VetClientMobileApp.Activities
                         newAppointment.StartTime = startTimeCalendar;
                         newAppointment.EndTime = endTimeCalendar;
                         newAppointment.Subject = document.Get("type").ToString();
-                        newAppointment.Notes = "Duration: " + document.Get("duration").ToString();
+                        newAppointment.Notes = "Durata: " + document.Get("duration").ToString();
                         newAppointment.Location = "Daily vet";
                         
                         _appointments.Add(newAppointment);
@@ -129,7 +131,7 @@ namespace VetClientMobileApp.Activities
                 catch(Exception ex)
                 {
                     Console.WriteLine("Error caught: ", ex.Message);
-                    Toast.MakeText(this, "Error getting appointments!", ToastLength.Long);
+                    Toast.MakeText(this, "Eroare la vizualizarea programarilor!", ToastLength.Long);
                 }
             }
         }
@@ -144,8 +146,8 @@ namespace VetClientMobileApp.Activities
             if (startDateConverted < DateTime.Now)
             {
                 var oldDaySlot = new AlertDialog.Builder(this);
-                oldDaySlot.SetTitle("Not allowed.");
-                oldDaySlot.SetMessage("Can't make appointments in the past days!");
+                oldDaySlot.SetTitle("Nepermis.");
+                oldDaySlot.SetMessage("Nu puteti face programari in zilele trecute!");
                 oldDaySlot.SetNeutralButton("Ok", delegate
                 {
                     oldDaySlot.Dispose();
@@ -156,8 +158,8 @@ namespace VetClientMobileApp.Activities
             if (e.ScheduleAppointment != null || e.ScheduleAppointments != null)
             {
                 var slotTakenAlert = new AlertDialog.Builder(this);
-                slotTakenAlert.SetTitle("Not allowed.");
-                slotTakenAlert.SetMessage("This time slot is occupied.");
+                slotTakenAlert.SetTitle("Nepermis");
+                slotTakenAlert.SetMessage("Acest loc este ocupat!");
                 slotTakenAlert.SetNeutralButton("Ok", delegate
                  {
                      slotTakenAlert.Dispose();
@@ -169,13 +171,13 @@ namespace VetClientMobileApp.Activities
                 var endTime = e.Calendar.Time;
                 endTime.Minutes += (int)_consultType.Duration;
                 var makeAppointmentAlert = new AlertDialog.Builder(this);
-                makeAppointmentAlert.SetTitle("Appointment at " + startDateConverted.ToString("hh-mm tt",System.Globalization.CultureInfo.InvariantCulture));
-                makeAppointmentAlert.SetMessage($"Make appointment for {animalSelected.Name}?");
-                makeAppointmentAlert.SetPositiveButton("Yes",delegate  {
+                makeAppointmentAlert.SetTitle("Programare la ora " + startDateConverted.ToString("hh-mm tt",System.Globalization.CultureInfo.InvariantCulture));
+                makeAppointmentAlert.SetMessage($"Faceti programare pentru {animalSelected.Name}?");
+                makeAppointmentAlert.SetPositiveButton("Da", async delegate {
                     HashMap mapAppointment = new HashMap();
                     // construct new appointment
-                    mapAppointment.Put("animalName",animalSelected.Name);
-                    mapAppointment.Put("clientId",clientLogged.Id);
+                    mapAppointment.Put("animalName", animalSelected.Name);
+                    mapAppointment.Put("clientId", clientLogged.Id);
                     mapAppointment.Put("duration", _consultType.Duration);
                     mapAppointment.Put("price", _consultType.Price);
                     mapAppointment.Put("type", _consultType.Type);
@@ -183,12 +185,23 @@ namespace VetClientMobileApp.Activities
                     mapAppointment.Put("endTime", endTime);
 
                     _firestoreDb.Collection("Medics").Document(clientLogged.MedicSubscribed.Id).Collection("Appointments").Document().Set(mapAppointment);
+                    // send request to firebase function to create notification
+                    Models.Notification newNotif = new Models.Notification() {
+                        Description = "O noua programare pentru " + animalSelected.Name,
+                        Type = "Programare noua",
+                        Timestamp = DateTime.Now.ToLocalTime(),
+                        MedicId = clientLogged.MedicSubscribed.Id,
+                    };
+
+                    await _functionsService.AddNotification(newNotif, "notificationCreate");
+
+
                     _scheduler.ItemsSource = null;
                     _appointments.Clear();
                     FetchAppointmentsWeek();
                     makeAppointmentAlert.Dispose();
                 });
-                makeAppointmentAlert.SetNegativeButton("No", delegate
+                makeAppointmentAlert.SetNegativeButton("Nu", delegate
                 {
                     makeAppointmentAlert.Dispose();
                 });
@@ -242,7 +255,7 @@ namespace VetClientMobileApp.Activities
                 // if no appointment types exists add the default one
                 _consultType.Duration = 15;
                 _consultType.Price = 10;
-                _consultType.Type = "Consult";
+                _consultType.Type = "Consultatie";
 
             }
 
@@ -251,7 +264,7 @@ namespace VetClientMobileApp.Activities
                 // if no consult has been set  a default one shall be initialized
                 _consultType.Duration = 15;
                 _consultType.Price = 10;
-                _consultType.Type = "Consult";
+                _consultType.Type = "Consultatie";
             }
         }
 

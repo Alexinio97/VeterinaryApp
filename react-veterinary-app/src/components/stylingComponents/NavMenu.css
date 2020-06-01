@@ -28,3 +28,16 @@ html {
 .counter.counter-lg {
   top: -5px !important;
 }
+
+.notifications{
+  overflow-y: scroll;
+  float: right;
+  margin-right: 30px;
+  height: 500px;
+  width: 300px;
+  z-index: 10;
+}
+
+.popover{
+  max-width: 400px; /* Max Width of the popover (depending on the container!) */
+}

@@ -57,13 +57,13 @@ namespace VetClientMobileApp.Activities
                 if (result == null)
                 {
                     var login_view = FindViewById<LinearLayout>(Resource.Id.login_view);
-                    Snackbar snackbar = Snackbar.Make(login_view, "Wrong email/password!", Snackbar.LengthShort);
+                    Snackbar snackbar = Snackbar.Make(login_view, "Parola sau email invalida.", Snackbar.LengthShort);
                     snackbar.Show();
                 }
                 else
                 {
                     StartActivity(typeof(MainActivity));
-                    Toast.MakeText(this, "Succesfull login!", ToastLength.Long).Show();
+                    Toast.MakeText(this, "V-ati logat cu succes!", ToastLength.Long).Show();
                 }
                 
             }

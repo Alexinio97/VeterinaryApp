@@ -66,17 +66,17 @@ namespace VetClientMobileApp.Activities
             
             if (firstName.Text.Any(char.IsDigit))
             {
-                firstName.Error = "Can't contain numbers!";
+                firstName.Error = "Nu poate contine numere!";
                 return;
             }
             if (lastName.Text.Any(char.IsDigit))
             {
-                lastName.Error = "Can't contain numbers!";
+                lastName.Error = "Nu poate contine numere!";
                 return;
             }
             if(password.Text.Length <=6)
             {
-                password.Error = "Password must have at least 6 characters.";
+                password.Error = "Parola trebuie sa aiba minim 6 caractere.";
                 return;
             }
 
@@ -97,11 +97,12 @@ namespace VetClientMobileApp.Activities
                 // don't save password in database
                 newClient.Password = null;
                 newClient.Id = auth.CurrentUser.Uid;    // store the id returned by database in order to insert it into the database
+                newClient.Token = await System.Threading.Tasks.Task.Run(() => _userService.GetTokenAsync(this));
                 await _storageService.SaveClientDataLocal(newClient);
 
                 AlertDialog.Builder succesDialog = new AlertDialog.Builder(this);
                 succesDialog.SetTitle("Succes");
-                succesDialog.SetMessage($"Account created!");
+                succesDialog.SetMessage($"Contul a fost creeat!");
 
                 succesDialog.SetNeutralButton("Ok", delegate
                 {
@@ -115,7 +116,7 @@ namespace VetClientMobileApp.Activities
             catch(Exception ex)
             {
                 var login_view = FindViewById<RelativeLayout>(Resource.Id.signUp_view);
-                Snackbar snackbar = Snackbar.Make(login_view, "Could not register your account!", Snackbar.LengthShort);
+                Snackbar snackbar = Snackbar.Make(login_view, "Nu s-a putut crea contul!", Snackbar.LengthShort);
                 snackbar.Show();
                 Console.WriteLine("Exception caught: ", ex.Message);
                 signUp.Enabled = true;

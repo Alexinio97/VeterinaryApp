@@ -9,7 +9,8 @@ import ModalAddAnimal from './ModalAddAnimal';
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { storage } from '../../firebaseConfig/config';
-
+import '../stylingComponents/FetchData.css';
+import { TextField } from '@material-ui/core';
 
 
 // component that will fetch animals owned by the user clicked
@@ -24,6 +25,8 @@ export class FetchUsersAnimals extends Component {
       deleteModal: false,
       animaltoDelete: null,
       clientId: this.props.match.params.clientId,
+      animalSearched:null,
+      tableData:[],
     }; 
 
     this.renderAnimalsData = this.renderAnimalsData.bind(this);
@@ -33,6 +36,7 @@ export class FetchUsersAnimals extends Component {
     this.saveAnimalChanges = this.saveAnimalChanges.bind(this);
     this.confirmDelete = this.confirmDelete.bind(this);
     this.saveNewAnimal = this.saveNewAnimal.bind(this);
+    this.handleSearch = this.handleSearch.bind(this);
   }
 
   
@@ -123,28 +127,29 @@ checkAnimalType(animalType){
 }
 
 renderAnimalsData(animals) {
-  var species = [ "Dog","Cat","Reptile"];
-  var neutered = [ "Yes","No"];
+  var species = [ "Caine","Pisica"];
+  var neutered = [ "Da","Nu"];
   return (
     <Table className="table table-hover" style={{width:"80%",marginLeft:"auto",marginRight:"auto"}}>
       <thead className="thead-dark">
         <tr>
-          <th scope="col">Profile</th>
-          <th scope="col">Name</th>
-          <th scope="col">Age</th>
-          <th scope="col">Breed</th>
-          <th scope="col">Species</th>
-          <th scope="col">Neutered</th>
-          <th><Button data-toggle="modal" onClick={() => this.handleAdd()}><FontAwesomeIcon icon={faPlusSquare}/> Add animal</Button></th>
+          <th scope="col">Profil</th>
+          <th scope="col">Nume</th>
+          <th scope="col">Varsta</th>
+          <th scope="col">Rasa</th>
+          <th scope="col">Specie</th>
+          <th scope="col">Sterilizat/Castrat</th>
+          <th><Button data-toggle="modal" onClick={() => this.handleAdd()}><FontAwesomeIcon icon={faPlusSquare}/> Adauga animal</Button></th>
         </tr>
       </thead>
       <tbody>
       {animals.map(animal =>
           <tr   key={animal.Id}>
-          <td className="link" title="View animal profile">
+          <td className="link" title="Vezi profilul animalului">
             <Link to={{
               pathname: '/animalPage',
-              state: {clientId: this.state.clientId,animal: animal,clientName:this.props.match.params.clientName}
+              state: {clientId: this.state.clientId,animal: animal,clientName:this.props.match.params.clientName,
+              clientEmail:this.props.match.params.clientEmail}
             }}>
               <FontAwesomeIcon icon={this.checkAnimalType(animal.Species)} size="2x"/> 
             </Link>
@@ -155,10 +160,10 @@ renderAnimalsData(animals) {
             <td>{species[animal.Species]}</td>
             <td>{neutered[animal.Neutered]}</td>
             <td>
-              <button className="btn" title="Edit" data-toggle="modal" data-target="#editModal" onClick={ () => this.handleShow({animaltoEdit:animal})}
+              <button className="btn" title="Editeaza" data-toggle="modal" data-target="#editModal" onClick={ () => this.handleShow({animaltoEdit:animal})}
                 ><FontAwesomeIcon icon={faEdit} color="blue"/>
               </button> 
-              <button className="btn" title="Delete" data-toggle="modal" data-target="#deleteModal" onClick= { () => this.setState(this.setState({
+              <button className="btn" title="Sterge" data-toggle="modal" data-target="#deleteModal" onClick= { () => this.setState(this.setState({
                                                                                                                           deleteModal:true,
                                                                                                                           animaltoDelete:animal})) }
                 ><FontAwesomeIcon icon={faTrash} color="red"/>
@@ -171,6 +176,25 @@ renderAnimalsData(animals) {
   );
 }
 
+  handleSearch(e){
+    let animalName = e.target.value;
+    let animalsFiltered = [];
+    this.setState({animalSearched:animalName});
+    if(animalName !== ""){
+        this.state.animals.map(animal => 
+          {
+              if(animal.Name.toLowerCase().includes(animalName.toLowerCase()))
+              {
+                animalsFiltered.push(animal);
+              }
+          });
+        this.setState({tableData:animalsFiltered});
+    }
+    else{
+      this.setState({tableData:this.state.animals});
+    }
+  }
+
 
   render() {
     let addModalClose = () => this.setState({showModal:false})
@@ -178,14 +202,16 @@ renderAnimalsData(animals) {
         
     let contents = this.state.loading
       ? <Spinner animation="border" variant="primary">
-          <span className="sr-only">Loading...</span>
+          <span className="sr-only">Asteapta...</span>
         </Spinner>
-      : this.renderAnimalsData(this.state.animals);
+      : this.renderAnimalsData(this.state.tableData);
 
     return (
       <div>
-        <h1 id="tabelLabel" >{this.props.match.params.clientName} owned pets.</h1>
-        <p>This component demonstrates fetching data from the server.</p>
+        <h1 id="tabelLabel" >Animalele detinute de {this.props.match.params.clientName}</h1>
+        <div className="search">
+          <TextField placeholder="Cauta..." className="col-3" value={this.state.animalSearched} onChange={this.handleSearch}></TextField>
+        </div>
         {contents}
         <ModalAddAnimal
           animal={this.state.animaltoEdit}
@@ -207,7 +233,7 @@ renderAnimalsData(animals) {
 
   async populatetUsersAnimals() {
     var clientId = this.state.clientId;
-    await animalService.getUsersAnimals(clientId).then( animals => this.setState({animals,loading: false}))
+    await animalService.getUsersAnimals(clientId).then( animals => this.setState({animals,loading: false,tableData:animals}))
     .catch(errorM => console.log("Error occured:  "+ errorM.message));
   }
 }
@@ -218,16 +244,16 @@ function DeleteModal(props)
   return(
     <Modal {...props}>
       <Modal.Header closeButton onClick={props.onHide}>
-        <Modal.Title>Deleting animal</Modal.Title>
+        <Modal.Title>Sterge animal</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
-        <p>Are you sure you want to delete this animal?</p>
+        <p>Sunteti sigur ca doriti sa stergeti acest animal?</p>
       </Modal.Body>
 
       <Modal.Footer>
-        <Button className="btn btn-danger" onClick={props.confirmDelete}>Yes</Button>
-        <Button variant="primary" onClick={props.onHide}>Close</Button>
+        <Button className="btn btn-danger" onClick={props.confirmDelete}>Da</Button>
+        <Button variant="primary" onClick={props.onHide}>Nu</Button>
       </Modal.Footer>
     </Modal>
   );

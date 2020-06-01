@@ -19,7 +19,7 @@ namespace VetClientMobileApp.Services
         public FirebaseFirestore GetDatabase(Android.Content.Context context);
         public FirebaseAuth GetAuth(Android.Content.Context context);
 
-        public FirebaseStorage GetStorage();
+        public FirebaseStorage GetStorage(Android.Content.Context context);
         public List<Appointment> GetAppointments(QuerySnapshot snapshot);
     }
 }

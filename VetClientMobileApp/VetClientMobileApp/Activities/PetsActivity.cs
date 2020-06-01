@@ -8,6 +8,7 @@ using Android.Content;
 using Android.Gms.Tasks;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.Design.Widget;
 using Android.Views;
 using Android.Widget;
 using Firebase.Firestore;
@@ -26,6 +27,7 @@ namespace VetClientMobileApp.Activities
         private FirebaseFirestore _firestoreDb;
         private ListView animalListView;
         private readonly StorageService _storageService;
+        private Client clientLogged;
         public PetsActivity()
         {
             _userService = new UserService();
@@ -33,23 +35,29 @@ namespace VetClientMobileApp.Activities
             _storageService = new StorageService();
         }
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected async override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-
+            clientLogged = await _storageService.GetClientDataLocal();
+            
             // Create your application here
             SetContentView(Resource.Layout.pets);
+            if (clientLogged.MedicSubscribed == null)
+            {
+                Toast.MakeText(this, "Abonati-va la un medic mai intai!", ToastLength.Long).Show();
+                StartActivity(typeof(MainActivity));
+                return;
+            }
             _firestoreDb = _userService.GetDatabase(this);
             animalListView = FindViewById<ListView>(Resource.Id.lstView_Pets);
 
             FetchData();
         }
 
-        private async void FetchData()
+        private void FetchData()
         {
             try
-            {
-                var clientLogged = await _storageService.GetClientDataLocal();
+            { 
                 // add on success listener
                 _firestoreDb.Collection("Medics").Document(clientLogged.MedicSubscribed.Id).Collection("Clients").Document(clientLogged.Id).Collection("Animals")
                     .Get().AddOnSuccessListener(this).AddOnFailureListener(this);

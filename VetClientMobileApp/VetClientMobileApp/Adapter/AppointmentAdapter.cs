@@ -21,11 +21,13 @@ namespace VetClientMobileApp.Adapter
         Activity _context;
         ImageButton deleteBtn;
         public bool _displayUpcomingAppoints;
+        private readonly FirebaseFunctionsService _functionsService;
         public AppointmentAdapter(Appointment[] appointments,Activity context,bool displayUpcomingAppoints)
         {
             _appointments = appointments;
             _context = context;
             _displayUpcomingAppoints = displayUpcomingAppoints;
+            _functionsService = new FirebaseFunctionsService(context, context);
         }
         public override Appointment this[int position] => _appointments[position];
 
@@ -48,9 +50,9 @@ namespace VetClientMobileApp.Adapter
                 view.FindViewById<TextView>(Resource.Id.upcoming_type_appoint).Text = _appointments[position].Type;
                 var convertedDate = DateTimeOffset.FromUnixTimeMilliseconds(_appointments[position].StartTime.Time);
                 view.FindViewById<TextView>(Resource.Id.txt_PetName).Text = _appointments[position].AnimalName;
-                view.FindViewById<TextView>(Resource.Id.upcoming_date_appoint).Text = "Date: " + convertedDate.ToString("d");
-                view.FindViewById<TextView>(Resource.Id.upcoming_price_appoint).Text = "Price: " + _appointments[position].Price.ToString();
-                view.FindViewById<TextView>(Resource.Id.upcoming_duration_appoint).Text = "Duration: " + _appointments[position].Duration.ToString() + " min";
+                view.FindViewById<TextView>(Resource.Id.upcoming_date_appoint).Text = "Data: " + convertedDate.ToString("d");
+                view.FindViewById<TextView>(Resource.Id.upcoming_price_appoint).Text = "Pret: " + _appointments[position].Price.ToString();
+                view.FindViewById<TextView>(Resource.Id.upcoming_duration_appoint).Text = "Durata: " + _appointments[position].Duration.ToString() + " min";
                 Java.Lang.Object animalName = _appointments[position].Id;
                 deleteBtn.SetTag(deleteBtn.Id, animalName);
                 deleteBtn.Click += AppointmentAdapter_Click;
@@ -61,9 +63,9 @@ namespace VetClientMobileApp.Adapter
                     view = _context.LayoutInflater.Inflate(Resource.Layout.appointment_history_item, null);
                 view.FindViewById<TextView>(Resource.Id.type_appoint).Text = _appointments[position].Type;
                 var convertedDate = DateTimeOffset.FromUnixTimeMilliseconds(_appointments[position].StartTime.Time);
-                view.FindViewById<TextView>(Resource.Id.date_appoint).Text = "Date: " + convertedDate.ToString("d");
-                view.FindViewById<TextView>(Resource.Id.price_appoint).Text = "Price: " + _appointments[position].Price.ToString();
-                view.FindViewById<TextView>(Resource.Id.duration_appoint).Text = "Duration: " + _appointments[position].Duration.ToString() + " min";
+                view.FindViewById<TextView>(Resource.Id.date_appoint).Text = "Data: " + convertedDate.ToString("d");
+                view.FindViewById<TextView>(Resource.Id.price_appoint).Text = "Pret: " + _appointments[position].Price.ToString();
+                view.FindViewById<TextView>(Resource.Id.duration_appoint).Text = "Durata: " + _appointments[position].Duration.ToString() + " min";
             }
             return view;
         }
@@ -81,9 +83,9 @@ namespace VetClientMobileApp.Adapter
             
 
             var deleteAppointAlert = new AlertDialog.Builder(_context);
-            deleteAppointAlert.SetTitle("Delete appointment");
-            deleteAppointAlert.SetMessage($"Are you sure you want to delete this appointment?");
-            deleteAppointAlert.SetPositiveButton("Yes", async delegate {
+            deleteAppointAlert.SetTitle("Sterge programare");
+            deleteAppointAlert.SetMessage($"Sunteti sigur ca doriti sa stergeti aceasta programare?");
+            deleteAppointAlert.SetPositiveButton("Da", async delegate {
                 StorageService storage = new StorageService();
                 var clientLogged = await storage.GetClientDataLocal();
                 firestoreDb.Collection("Medics").Document(clientLogged.MedicSubscribed.Id).Collection("Appointments").Document(appoitnId.ToString())
@@ -93,13 +95,24 @@ namespace VetClientMobileApp.Adapter
                 var appointToDelete = appointsList.FirstOrDefault(appoint => appoint.Id.Equals(appoitnId.ToString()));
                 appointsList.Remove(appointToDelete);
 
+                //send notification that appointment was deleted
+                Models.Notification newNotif = new Models.Notification()
+                {
+                    Description = $"Programarea a fost anulata de catre {clientLogged.FirstName}, {clientLogged.LastName}." ,
+                    Type = "Programare anulata",
+                    Timestamp = DateTime.Now.ToLocalTime(),
+                    MedicId = clientLogged.MedicSubscribed.Id,
+                };
+
+                await _functionsService.AddNotification(newNotif, "notificationCreate");
+
                 _appointments = appointsList.ToArray();
                 deleteAppointAlert.Dispose();
                 _context.Finish();
                 _context.StartActivity(typeof(UpcomingAppointmentsActivity));
                 return;
             });
-            deleteAppointAlert.SetNegativeButton("No", delegate
+            deleteAppointAlert.SetNegativeButton("Nu", delegate
             {
                 deleteAppointAlert.Dispose();
             });

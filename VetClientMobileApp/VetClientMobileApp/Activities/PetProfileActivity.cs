@@ -42,10 +42,10 @@ namespace VetClientMobileApp.Activities
             var pet_photo = FindViewById<ImageView>(Resource.Id.petProfilePhoto);
 
 
-            pet_name.Text = "Name: " +animalSelected.Name;
-            pet_age.Text = "Age: " + animalSelected.Age.ToString();
-            pet_breed.Text = "Breed: " + animalSelected.Breed.ToString();
-            pet_neutered.Text = "Neutered: " + animalSelected.Neutered.ToString();
+            pet_name.Text = "Nume: " +animalSelected.Name;
+            pet_age.Text = "Varsta: " + animalSelected.Age.ToString();
+            pet_breed.Text = "Specie: " + animalSelected.Breed.ToString();
+            pet_neutered.Text = "Sterilizat/Castrat: " + animalSelected.Neutered.ToString();
 
             var makeAnAppointmentBtn = FindViewById<Button>(Resource.Id.btn_MakeAppointment);
             makeAnAppointmentBtn.Click += MakeAnAppointmentBtn_Click;
@@ -53,12 +53,13 @@ namespace VetClientMobileApp.Activities
             var viewAppointmentsHistory = FindViewById<Button>(Resource.Id.btn_AppointmentHistory);
             viewAppointmentsHistory.Click += ViewAppointmentsHistory_Click;
 
-            var _storage = _userService.GetStorage();
+            var _storage = _userService.GetStorage(this);
 
             var url = await GetFile(animalSelected.Photo, _storage);
+            
             if(url != null)
             {
-                await DisplayPhoto(url, pet_photo);
+                await DisplayPhoto(url.ToString(), pet_photo);
             }
         }
 
@@ -84,9 +85,9 @@ namespace VetClientMobileApp.Activities
                 .Into(photo);
         }
 
-        public async Task<string> GetFile(string fileName, FirebaseStorage storage)
+        public async Task<Android.Net.Uri> GetFile(string fileName, FirebaseStorage storage)
         {
-            return await storage
+            return await storage.Reference
                 .Child("animalProfilePics")
                 .Child(fileName)
                 .GetDownloadUrlAsync();

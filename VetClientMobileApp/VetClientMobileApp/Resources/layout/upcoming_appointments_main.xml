@@ -17,7 +17,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:title="Upcoming appointments"/>
+            app:title="Programari viitoare"/>
 
     </android.support.design.widget.AppBarLayout>
     <ListView

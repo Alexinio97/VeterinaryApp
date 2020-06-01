@@ -31,7 +31,7 @@
             <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Name:"
+            android:text="Nume:"
             android:layout_marginTop="15dp"
             android:layout_marginStart="20dp"
             android:id="@+id/pet_name_text"
@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:text="Age:"
+                android:text="Varsta:"
                 android:layout_marginTop="15dp"
                 android:textSize="20dp"
                 android:id="@+id/pet_age_txt"
@@ -51,14 +51,14 @@
                 <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Neutered:"
+                android:text="Sterilizat/Castrat:"
                 android:layout_marginStart="20dp"
                 android:id="@+id/pet_neutered_text"
                 android:textSize="20dp"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:text="Species:"
+                    android:text="Specia:"
                     android:layout_marginTop="40dp"
                     android:textSize="20dp"
                     android:layout_marginStart="20dp"
@@ -72,7 +72,7 @@
             android:layout_marginEnd="15dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="140dp"
-            android:text="Make an appointment"
+            android:text="Faceti o programare"
             android:id="@+id/btn_MakeAppointment"
             android:backgroundTint="#4c75ae"
             android:drawableLeft="@drawable/calendar"/>
@@ -83,7 +83,7 @@
             android:layout_marginEnd="15dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="210dp"
-            android:text="View appointment history"
+            android:text="Vedeti istoricul programarilor"
             android:id="@+id/btn_AppointmentHistory"
             android:backgroundTint="#4c75ae"
             android:drawableLeft="@drawable/event"/>

@@ -38,5 +38,14 @@ namespace VetClientMobileApp.Services
             Client receivedClient = JsonConvert.DeserializeObject<Client>(clientJson);
             return receivedClient;
         }
+
+        public async Task DeleteClientLocalData()
+        {
+            IFolder rootFolder = FileSystem.Current.LocalStorage;
+            IFolder folder = await rootFolder.CreateFolderAsync("DailyVetData",
+                CreationCollisionOption.OpenIfExists);
+            IFile file = await folder.GetFileAsync("client.json");
+            await file.DeleteAsync();
+        }
     }
 }

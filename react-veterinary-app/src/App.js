@@ -88,7 +88,7 @@ export default class App extends Component {
         <PrivateRoute exact path="/inventory" authenticated={this.state.isLoggedIn} component={Inventory} />
         <PrivateRoute  exact 
         authenticated={this.state.isLoggedIn}
-        path="/userAnimals/:clientName/:clientId" 
+        path="/userAnimals/:clientName/:clientId/:clientEmail" 
         component={FetchUsersAnimals} name="userAnimals"/>
         <Route exact path="/login" render={(props) => {
                   return <LoginPage setUserLoggedIn={this.setUserLoggedIn} authenticated={this.state.isLoggedIn} {...props} />

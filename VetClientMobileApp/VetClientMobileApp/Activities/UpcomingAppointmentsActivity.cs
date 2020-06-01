@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.Design.Widget;
 using Android.Views;
 using Android.Widget;
 using Firebase.Firestore;
@@ -35,9 +36,15 @@ namespace VetClientMobileApp.Activities
         protected async override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-             _clientLogged = await _storageService.GetClientDataLocal();
-            // Create your application here
+            _clientLogged = await _storageService.GetClientDataLocal();
+     
             SetContentView(Resource.Layout.upcoming_appointments_main);
+            if (_clientLogged.MedicSubscribed == null)
+            {
+                Toast.MakeText(this, "Abonati-va la un medic mai intai!", ToastLength.Long).Show();
+                StartActivity(typeof(MainActivity));
+                return;
+            }
             upcomingAppoints = FindViewById<ListView>(Resource.Id.lstView_upcoming_appoints);
             noAppointsTxt = FindViewById<TextView>(Resource.Id.no_upcoming_appoints_txt);
             _firestoreDb = _userService.GetDatabase(this);
@@ -70,7 +77,7 @@ namespace VetClientMobileApp.Activities
             List<Appointment> upcomingAppointments = _userService.GetAppointments(snapshot);
             if (upcomingAppointments == null)
             {
-                noAppointsTxt.Text = "No upcoming appointments.";
+                noAppointsTxt.Text = "Nici-o programare viitoare";
             }
             else
             {

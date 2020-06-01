@@ -67,7 +67,7 @@ namespace VetClientMobileApp.Activities
         private void AppointsListener_Failure(object sender, EventArgs e)
         {
             var exception = (System.Exception)sender;
-            Toast.MakeText(this, "Fetching appointments failed!", ToastLength.Long);
+            Toast.MakeText(this, "Nu s-au gasit programari!", ToastLength.Long);
         }
 
         private void AppointsListener_Succes(object sender, EventArgs e)
@@ -76,7 +76,7 @@ namespace VetClientMobileApp.Activities
             List<Appointment> oldAppointments = _userService.GetAppointments(snapshot);
             if(oldAppointments == null)
             {
-                _noAppointsTxt.Text = $"{_animalSelected.Name} doesn't have any appointments.";
+                _noAppointsTxt.Text = $"{_animalSelected.Name} nu are nici-o programare";
             }
             else
             {

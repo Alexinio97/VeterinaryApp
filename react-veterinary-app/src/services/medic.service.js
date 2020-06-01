@@ -7,7 +7,9 @@ export const medicService = {
     login,
     // logout,
     getAllClients,
+    addClientInvoice,
     getMedicData,
+    getClientNotificationToken,
     // appointments
     getAppointments,
     GetAppointmentsFuture,
@@ -27,6 +29,8 @@ export const medicService = {
     addCategory,
     updateCategory,
     deleteCategory,
+    // notifications methods
+    deleteNotification,
 }
 
 async function login(email,password){
@@ -36,6 +40,14 @@ async function login(email,password){
     } );
 }
 
+async function getClientNotificationToken(clientId){
+    let medicId = auth().currentUser.uid;
+    console.log(clientId);
+    return db.collection("Medics").doc(medicId).collection("Clients").doc(clientId).get().then(querySnapshot => {
+        let token = querySnapshot.data().NotificationToken;
+        return token;
+    }).catch(err => console.error("Could not retrieve client notification Token: ",err));
+}
 async function getAllClients() {
     var medicId = localStorage.getItem("medicId")
     var clients = []
@@ -47,6 +59,14 @@ async function getAllClients() {
         });
         return clients;
     }).catch( err => console.log(err));
+}
+
+async function addClientInvoice(clientId,invoiceName) {
+    let medicId = auth().currentUser.uid;
+    return db.collection("Medics").doc(medicId).collection("Clients").doc(clientId).collection("Invoices")
+    .add({Invoice:invoiceName}).then(() => {
+        console.log("Invoice added!");
+    }).catch(err => console.error("Could not add invoice: ",err));
 }
 
 async function getMedicData()
@@ -231,6 +251,14 @@ async function updateCategory(category){
 async function deleteCategory(category){
     let medicId = auth().currentUser.uid;
     return db.collection('Medics').doc(medicId).collection("Categories").doc(category.Id).delete().then(() =>
+    {
+        console.log("Document deleted!");
+    }).catch(err => console.error("Error caught: ",err));
+}
+
+async function deleteNotification(notificationId){
+    let medicId = auth().currentUser.uid;
+    return db.collection('Medics').doc(medicId).collection("Notifications").doc(notificationId).delete().then(() =>
     {
         console.log("Document deleted!");
     }).catch(err => console.error("Error caught: ",err));

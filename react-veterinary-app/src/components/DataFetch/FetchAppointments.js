@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
-import {format, differenceInHours , addHours, getHours, fromUnixTime} from 'date-fns';
+import {format, fromUnixTime} from 'date-fns';
 import '../stylingComponents/Appointments.css';
 import { medicService } from '../../services/medic.service';
 import { Spinner } from 'react-bootstrap';
-import { faTrash ,faTimes} from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AppointmentAdd from './ModalAddAppointment';
-import { PopoverHeader, PopoverBody, UncontrolledPopover} from 'reactstrap';
 import { Button } from 'react-bootstrap';
 import { ScheduleComponent, Inject, Day, WorkWeek, Month, ViewDirective, ViewsDirective} from '@syncfusion/ej2-react-schedule';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { auth } from 'firebase';
+import { notifications } from '../../helpers/notification';
 
 
 export class Appointments extends Component{
@@ -27,6 +28,8 @@ export class Appointments extends Component{
             appointToDelete: null,
             startHour:null,
             finishHour:null,
+            minDate:null,
+            maxDate:null,
         }
         this.handleClick = this.handleClick.bind(this);
         this.makeAppointment = this.makeAppointment.bind(this);
@@ -35,13 +38,24 @@ export class Appointments extends Component{
         this.handleDelete = this.handleDelete.bind(this);
     }
     componentDidMount(){
-        this.setMedicSchedule();
-        this.populateAppointments();
+        if(auth().currentUser !== null)
+            this.setMedicSchedule();
+            this.populateAppointments();
     }
 
     async populateAppointments(){
         // get upcoming appointments for all month
-        await medicService.GetAppointmentsFuture().then(appoints => this.setState({appointments:appoints,loading:false}));
+        let minDate =  new Date();
+        minDate.setHours(0,0,0,0);
+        let maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + 20);
+        maxDate.setHours(23,0,0,0);
+        await medicService.GetAppointmentsFuture().then(appoints => this.setState({
+            appointments:appoints,
+            loading:false,
+            minDate:minDate,
+            maxDate:maxDate,
+        }));
     }
 
 
@@ -53,7 +67,13 @@ export class Appointments extends Component{
     makeAppointment(e){
         console.log(e);
         var selectedDay = new Date(e.startTime);
-        if(selectedDay.getHours() == 0)
+        console.log(selectedDay, this.state.maxDate);
+        if(selectedDay >= this.state.maxDate || selectedDay < this.state.minDate)
+        {
+            alert("Appointment range has been exceeded!");
+            return;
+        }
+        if(selectedDay.getHours() === 0)
             return;
         let endTime = new Date(e.endTime);
         console.log("End time: !!!!!!!!" ,endTime);
@@ -113,11 +133,21 @@ export class Appointments extends Component{
     
     showDeleteDialog(props){
         if(this.state.deleteModal === false)  
-            this.setState({deleteModal:true,appointToDelete:props.Id});
+        {
+            let appointDeleted = null;
+            this.state.appointments.map( appoint => {
+                if(appoint.Id === props.Id){
+                    appointDeleted = appoint;
+                }
+            })
+            console.log(appointDeleted);
+            this.setState({deleteModal:true,appointToDelete:appointDeleted});
+        }
     }
 
     async handleDelete(){
-        await medicService.deleteAppointment(this.state.appointToDelete);
+        await medicService.deleteAppointment(this.state.appointToDelete.Id);
+        this.sendNotification(this.state.appointToDelete.clientId,"Appointment for " +this.state.appointToDelete.animalName + " at " + format(new Date(fromUnixTime(this.state.appointToDelete.startTime.seconds)),"dd/MM/yyyy k:mm a") + " has been cancelled, please reschedule.")
         this.populateAppointments();
         this.setState({deleteModal:false});
     }
@@ -153,37 +183,8 @@ export class Appointments extends Component{
         this.setState({showAddModal:false});
         await medicService.addAppointment(appointment);
         alert("Appointment made!")
-        this.sendAppointmentNotification(appointment);
+        notifications.sendNotification(appointment.clientId, "Aveti programare noua in " + format(appointment.startTime,"dd/MM/yyyy k:mm a"));
         await this.populateAppointments(this.state.selectedDay);
-    }
-
-    async sendAppointmentNotification(appointment){
-        let token = "<user_token/s>";
-        const FIREBASE_API_KEY = "<server_key>";
-        const message = {
-         registration_ids: [token], 
-          notification: {
-            title: "Daily Vet",
-            body: "New appointment at " + format(appointment.startTime,"dd/MM/yyyy k:mm a"),
-            "vibrate": 1,
-            "sound": 1,
-            "show_in_foreground": true,
-            "priority": "high",
-            "content_available": true,
-          },
-          data: {
-            title: "Daily Vet",
-            body: "IND chose to bat",
-          }
-        };
-      
-        let headers = new Headers({
-          "Content-Type": "application/json",
-          "Authorization": "key=" + FIREBASE_API_KEY
-        });
-      
-        let response = await fetch("https://fcm.googleapis.com/fcm/send", { method: "POST", headers, body: JSON.stringify(message) })
-        response = await response.json();
     }
 
     async setMedicSchedule(){
@@ -213,6 +214,8 @@ export class Appointments extends Component{
         return(
             <ScheduleComponent startHour={this.state.startHour} endHour={this.state.finishHour} cellClick={this.makeAppointment}
                     popupOpen={this.onPopUpOpen}
+                    minDate={this.state.minDate}
+                    maxDate={this.state.maxDate}
                     quickInfoTemplates={{header: this.header.bind(this)}}
                     eventSettings={{dataSource:scheduleAppointments}}>
                         <ViewsDirective>
@@ -229,10 +232,10 @@ export class Appointments extends Component{
         let modalClose = () => this.setState({showAddModal:false})
         return(
             <div>
-                <div className="page-header"><h1>Appointments</h1></div>
+                <div className="page-header"><h1>Programari</h1></div>
                 <div className="container">
                 {this.state.loading ? <Spinner animation="border" variant="primary">
-                                    <span className="sr-only">Loading...</span>
+                                    <span className="sr-only">Asteapta...</span>
                             </Spinner> : this.renderScheduler() }
                 </div>
                 {this.renderDeleteDialog()}

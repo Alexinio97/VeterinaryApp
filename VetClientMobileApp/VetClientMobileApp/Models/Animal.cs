@@ -15,13 +15,13 @@ namespace VetClientMobileApp.Models
 
     public enum Species
     {
-        dog,
-        cat
+        caine,
+        pisica
     }
     public enum Neutered
     {
-        yes,
-        no
+        da,
+        nu
     }
 
     public class Animal

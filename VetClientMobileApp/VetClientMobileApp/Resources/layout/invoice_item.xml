@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:padding="10dp"
+    android:id="@+id/invoices_layout">
+    <android.support.v7.widget.CardView
+        android:layout_width="fill_parent"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:backgroundTint="#7777"
+        app:cardCornerRadius="25dp">
+    <ImageButton
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="300dp"
+            android:layout_marginTop="5dp"
+            android:src="@drawable/ic_close"
+            android:id="@+id/deleteInvoice_btn"
+            />
+    <TextView
+        android:id="@+id/invoice_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20dip"
+        android:textStyle="bold"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center_horizontal"
+        android:text="ceva foarte lung"
+        />
+    </android.support.v7.widget.CardView>
+</LinearLayout >

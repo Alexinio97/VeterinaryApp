@@ -1,5 +1,4 @@
 import React,{Component} from 'react';
-import { auth } from 'firebase';
 import { storage } from '../firebaseConfig/config';
 import { medicService } from '../services/medic.service';
 import { Card, Form, Alert, Image, Modal } from 'react-bootstrap';
@@ -8,6 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt,faCamera} from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import { Button } from 'react-bootstrap';
+import { auth } from 'firebase';
+
 export class ProfilePage extends Component{
     constructor(props){
         super(props);
@@ -23,6 +24,7 @@ export class ProfilePage extends Component{
             photo:null,
             successUpdate: null,
             showPhotoModal: false,
+            errors:{},
         }
         this.handleChange = this.handleChange.bind(this);
         this.handlePhotoSave = this.handlePhotoSave.bind(this);
@@ -63,7 +65,7 @@ export class ProfilePage extends Component{
 
     handleEdit(e){
         if(this.state.edit === true){
-                this.setState({edit:false})
+                this.setState({edit:false});
         }
         else{ 
           this.setState({
@@ -72,6 +74,7 @@ export class ProfilePage extends Component{
                 start:this.state.medicLogged.Schedule.start,
                 end:this.state.medicLogged.Schedule.end,
                 phone:this.state.medicLogged.Phone,
+                errors:{},
             });
         }
     }
@@ -82,17 +85,60 @@ export class ProfilePage extends Component{
         this.setState({[name]:value})
     }
 
+    validateForm(medic){
+        let errors ={};
+        let isValid = true;
+        // regex for easier validation
+        let emailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        let scheduleRegEx = new RegExp("([0-2][0-9]:[0-5]{2})$");
+        let phoneRegEx = new RegExp("([0-9]{10})$");
+
+        if(emailRegEx.test(medic.Email) === false){
+            errors["email"] = "Please input a valid email.";
+            isValid = false;
+        }  
+        if(scheduleRegEx.test(medic.Schedule.start) === false){
+            errors["start"] = "Please input a valid start time.(e.g 08:00)";
+            isValid = false;
+        }
+        let result = scheduleRegEx.test(medic.Schedule.end);
+        if(result === false){
+            errors["end"] = "Please input a valid end time.(e.g 08:00)";
+            isValid = false;
+        }
+
+        if(phoneRegEx.test(medic.Phone) === false){
+            errors["phone"] = "Please add a valid phone number!";
+            isValid = false;
+        }
+
+
+
+        this.setState({errors:errors});
+        return isValid;
+    }
     async handleSave(e){
         const medic = {
             Email:this.state.email,
             Schedule:{start:this.state.start,end:this.state.end},
             Phone:this.state.phone,
         }
+        
+        let result = this.validateForm(medic);
+        if(result === false)
+        {
+            return;
+        }
+
         await medicService.UpdateMedic(medic).then(medic => this.setState({successUpdate:true}))
                 .catch(err => {
                     this.setState({successUpdate:false});
                     console.error("Error caught ",err);
                 });
+        let user = auth().currentUser;
+        user.updateEmail(medic.Email).then(() => {
+            console.log("Authentication mail updated.");
+        }).catch(err => console.error("Error updating email: ",err));
         console.log("Setting edit to true.")
         this.setState({edit:true});
     }
@@ -109,7 +155,7 @@ export class ProfilePage extends Component{
     renderMedicProfile(){
         return(
             <div className="container jumbotron">
-            <h1 className="display-6 text-left" style={{paddingLeft:"30px"}}>My Profile</h1>
+            <h1 className="display-6 text-left" style={{paddingLeft:"30px"}}>Profilul meu</h1>
             <div className="col">
                 <div className="row">
                     <div className="col mb-3">
@@ -132,7 +178,7 @@ export class ProfilePage extends Component{
                                                 <div class="mt-2">
                                                     <button class="btn btn-primary"  type="button" onClick={() => this.setState({showPhotoModal:true})}>
                                                         <FontAwesomeIcon icon={faCamera}/>
-                                                        <span> Change Photo</span>
+                                                        <span> Schimba poza</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -152,14 +198,14 @@ export class ProfilePage extends Component{
                                                         <div className="row">
                                                             <div className="col">
                                                                 <Form.Group>
-                                                                    <Form.Label>First name</Form.Label>
+                                                                    <Form.Label>Prenume</Form.Label>
                                                                     <Form.Control plaintext readOnly name="firstName" placeholder="John"
                                                                                 value={this.state.medicLogged.FirstName} className="text-center"/>  
                                                                 </Form.Group>
                                                             </div>
                                                             <div className="col">
                                                                 <Form.Group>
-                                                                    <Form.Label>Last name</Form.Label>
+                                                                    <Form.Label>Nume</Form.Label>
                                                                     <Form.Control plaintext readOnly type="text" name="lastName" placeholder="Doe"
                                                                             value={this.state.medicLogged.LastName} className="text-center"/>
                                                                 </Form.Group>
@@ -172,16 +218,18 @@ export class ProfilePage extends Component{
                                                                     <Form.Control readOnly={this.state.edit} type="email" name="email" placeholder="something@example.com" value={this.state.email}
                                                                         onChange={this.handleChange}
                                                                     />
+                                                                    <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["email"]}</b></span>
                                                                 </Form.Group>
                                                             </div>
                                                         </div>
                                                         <div className="row">
                                                             <div className="col">
                                                                 <Form.Group>
-                                                                    <Form.Label>Phone</Form.Label>
+                                                                    <Form.Label>Telefon</Form.Label>
                                                                     <Form.Control readOnly={this.state.edit} type="tel" name="phone" placeholder="0732..." value={this.state.phone}
                                                                             onChange={this.handleChange}
                                                                     />
+                                                                    <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["phone"]}</b></span>
                                                                 </Form.Group>
                                                             </div>
                                                         </div>
@@ -189,26 +237,27 @@ export class ProfilePage extends Component{
                                                 </div>
                                                 <hr class="my-4"/>
                                                 <div className="row">
-                                                    <div className="col-12 col-sm-4 mb-3">
-                                                        <div className="mb-2"><b>Schedule</b></div>
+                                                    <div className="col-12 col-sm-6 ">
+                                                        <div className="mb-2"><b>Program</b></div>
                                                         <div className="row">
                                                             <div className="col">
                                                                 <Form.Group>
-                                                                    <Form.Label>Start hour</Form.Label>
+                                                                    <Form.Label>Ora deschidere</Form.Label>
                                                                     <Form.Control readOnly={this.state.edit} type="text" name="start" maxLength="6" placeholder="08:00"
                                                                                 value={this.state.start}
                                                                                 onChange={this.handleChange}
-                                                                                />   
+                                                                                />
+                                                                    <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["start"]}</b></span>    
                                                                 </Form.Group>
                                                             </div>
                                                         <div className="col">
                                                                 <Form.Group>
-                                                                    <Form.Label>Finish hour</Form.Label>
+                                                                    <Form.Label>Ora inchidere</Form.Label>
                                                                     <Form.Control readOnly={this.state.edit} type="text" name="end" maxLength="6" placeholder="16:30"
                                                                                 value={this.state.end}
                                                                                 onChange={this.handleChange}
                                                                                 />   
-                                                                                
+                                                                    <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["end"]}</b></span>            
                                                                 </Form.Group>
                                                             </div>
                                                         </div>
@@ -218,15 +267,15 @@ export class ProfilePage extends Component{
                                             <div class="row">
                                                     {(this.state.edit === true) ? 
                                                     <div class="col d-flex justify-content-end col-auto">
-                                                        <button class="btn btn-primary"  onClick={() => this.handleEdit()}>Edit</button>
+                                                        <button class="btn btn-primary"  onClick={() => this.handleEdit()}>Editeaza</button>
                                                     </div>:
                                                     <div class="col d-flex justify-content-end col-md-auto">
-                                                        <button class="btn btn-success"  onClick={() => this.handleSave()}>Save changes</button>
+                                                        <button class="btn btn-success"  onClick={() => this.handleSave()}>Salveaza modificari</button>
                                                     </div>
                                                     }
                                                     {(this.state.edit === false ) ? 
                                                     <div class="justify-content-end col-auto">
-                                                        <button class="btn btn-danger" onClick={() => this.handleEdit()}>Cancel</button>
+                                                        <button class="btn btn-danger" onClick={() => this.handleEdit()}>Anuleaza</button>
                                                     </div> :""
                                                     }
                                             </div>  

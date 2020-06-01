@@ -14,6 +14,7 @@ export default class ModalAddAnimal extends Component{
             Species: '0',
             Neutered: '0',
             Photo:null,
+            errors:{},
         };
         this.handleSave = this.handleSave.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -23,6 +24,39 @@ export default class ModalAddAnimal extends Component{
     handleClose()
     {
         this.props.saveModalDetails(this.state);
+    }
+
+    validateInput(animal){
+        let errors = {};
+        let isValid = true;
+        console.log(animal.Age);
+        if(animal.Name.length < 1){
+            errors["name"] = "Va rugam completati numele!";
+            isValid = false;
+        }
+        if(animal.Breed.length < 1){
+            errors["breed"] = "Va rugam adaugati rasa!";
+            isValid = false;
+        }
+        if(animal.Name.match(/\d+/g) != null)
+        {
+            errors["name"] = "Nu se pot adauga numere!";
+            isValid = false;
+        }
+        if(animal.Breed.match(/\d+/g) != null)
+        {
+            errors["breed"] = "Nu se pot adauga numere!";
+            isValid = false;
+        }
+        
+        if(animal.Age < 1 )
+        {
+            errors["age"] = "Te rugam adauga o varsta valida!";
+            isValid = false;
+        }
+
+        this.setState({errors:errors});
+        return isValid;
     }
 
     componentDidUpdate(prevProps ) {
@@ -39,7 +73,8 @@ export default class ModalAddAnimal extends Component{
                 Breed: animalReceived.Breed,
                 Species: animalReceived.Species,
                 Neutered: animalReceived.Neutered,
-                Photo: animalReceived.Photo
+                Photo: animalReceived.Photo,
+                errors:{},
             });
         }
         else{
@@ -50,7 +85,8 @@ export default class ModalAddAnimal extends Component{
                 Breed: '',
                 Species: '0',
                 Neutered: '0',
-                Photo:null
+                Photo:null,
+                errors:{},
             });
         }
     }
@@ -58,7 +94,10 @@ export default class ModalAddAnimal extends Component{
 
     handleSave() {
         const animal = this.state;
-        
+        let result = this.validateInput(animal);
+        if(result === false){
+            return;
+        }
         if(animal.Id === '')
         {
             console.log("Animal to add: " + this.state);
@@ -94,29 +133,32 @@ export default class ModalAddAnimal extends Component{
         </Modal.Header>
         <Modal.Body>
         <div>
-        <Form>
-            <div class="custom-file">
-                <input type="file" class="custom-file-input" name="Photo" id="customFile" onChange={this.handleChangePhoto}/>
-                <label class="custom-file-label" for="customFile">{(this.state.Photo !==undefined && this.state.Photo !== null)
+        <Form noValidate>
+            <div className="custom-file">
+                <input type="file" className="custom-file-input" name="Photo" id="customFile" onChange={this.handleChangePhoto}/>
+                <label className="custom-file-label" for="customFile">{(this.state.Photo !==undefined && this.state.Photo !== null)
                                                                      ? this.state.Photo.name || this.state.Photo : "Choose Photo..."}</label>
             </div>
             <Form.Group controlId="formGroupName">
-                <Form.Label>Name</Form.Label>
-                <Form.Control type="text" name="Name"  value={this.state.Name} onChange={this.handleChange}/>
+                <Form.Label>Nume</Form.Label>
+                <Form.Control type="text" name="Name" required value={this.state.Name} onChange={this.handleChange}/>
+                <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["name"]}</b></span>
             </Form.Group>
             <Form.Group controlId="formGroupAge">
-                <Form.Label>Age</Form.Label>
+                <Form.Label>Varsta</Form.Label>
                 <Form.Control type="number" name="Age" value={this.state.Age} onChange={this.handleChange}/>
+                <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["age"]}</b></span>
             </Form.Group>
             <Form.Group controlId="formGroupBreed">
-                <Form.Label>Breed</Form.Label>
+                <Form.Label>Rasa</Form.Label>
                 <Form.Control type="text" name="Breed" value={this.state.Breed} onChange={this.handleChange}/>
+                <span style={{color:"red",fontSize:"12px"}}><b>{this.state.errors["breed"]}</b></span>
             </Form.Group>
             <Form.Group controlId="formGroupSpecies">
-                <Form.Label>Species</Form.Label>
+                <Form.Label>Specie</Form.Label>
                 <Form.Control as="select"  name="Species" value={this.state.Species} onChange={this.handleChange}>
-                    <option value='0'>Dog</option>
-                    <option value='1'>Cat</option>
+                    <option value='0'>Caine</option>
+                    <option value='1'>Pisica</option>
                 </Form.Control>
             </Form.Group>
             {(this.state.Species === 2) ? "" :
@@ -124,8 +166,8 @@ export default class ModalAddAnimal extends Component{
                 <Form.Label>Neutered</Form.Label>
                 
                 <Form.Control as="select"  name="Neutered" value={this.state.Neutered} onChange={this.handleChange}>
-                    <option value='0'>Yes</option>
-                    <option value='1'>No</option>
+                    <option value='0'>Da</option>
+                    <option value='1'>Nu</option>
                 </Form.Control>
             </Form.Group>
             }
@@ -134,10 +176,10 @@ export default class ModalAddAnimal extends Component{
         </Modal.Body>
         <Modal.Footer>
         <Button variant="secondary" onClick={this.props.onHide}>
-            Close
+            Inchide
           </Button>
           <Button variant="primary" onClick={this.handleSave}>
-            Save animal
+            Salveaza animal
           </Button>
         </Modal.Footer>
       </Modal>

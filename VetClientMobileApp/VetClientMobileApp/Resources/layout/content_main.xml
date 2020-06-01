@@ -7,14 +7,26 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/app_bar_main"
     android:id="@+id/main_View">
-
     <TextView
-        android:text="Ceva"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:text="Tratamente active"
+        android:padding="5dp"
+        android:textStyle="bold"
+        android:textSize="20dp"
+        />
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:id="@+id/msgText"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:padding="10dp" />
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="35dp"
+        android:id="@+id/lstView_treatments"/>
 
 </RelativeLayout>

@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Create new account"
+        android:text="Creare cont nou"
         android:textAlignment="center"
         android:textSize="20dp"
         android:textStyle="bold"
@@ -26,7 +26,7 @@
             android:layout_marginTop="30dp"
            >
         <EditText  
-            android:hint="First name"  
+            android:hint="Prenume"  
             android:id="@+id/txt_firstName"  
             android:inputType="text"  
             android:layout_width="130dp"  
@@ -34,7 +34,7 @@
         <EditText
             android:layout_width="130dp"
             android:layout_height="match_parent"
-            android:hint="Last name"
+            android:hint="Nume"
             android:layout_marginLeft="40dp"
             android:inputType="text"
             android:id="@+id/txt_lastName"/>
@@ -56,7 +56,7 @@
         <EditText
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:hint="Password"
+            android:hint="Parola"
             android:inputType="textPassword"
             android:drawableLeft="@drawable/lock"
             android:id="@+id/txt_password"
@@ -64,14 +64,14 @@
          <EditText
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
-             android:hint="Phone"
+             android:hint="Telefon"
              android:inputType="phone"
              android:id="@+id/txt_phone"
              android:drawableLeft="@drawable/phone"/>
         <Button
             android:layout_width="match_parent"
             android:layout_marginTop="20dp"
-            android:layout_height="wrap_content" android:text="Sign up" android:id="@+id/SignUp_btn"
+            android:layout_height="wrap_content" android:text="Inregistreaza-te" android:id="@+id/SignUp_btn"
             android:layout_gravity="bottom" android:layout_marginStart="40dp" android:layout_marginEnd="40dp" android:backgroundTint="#4c75ae"
             android:textStyle="bold"/>
     </LinearLayout>
@@ -79,7 +79,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Already have an account? Log in"
+        android:text="Aveti deja un cont? Autentifica-te"
         android:textSize="15dp"
         android:layout_marginTop="380dp"
         android:textAlignment="center"
@@ -87,7 +87,7 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Log in"
+        android:text="Autentificare"
         android:backgroundTint="#4c75ae"
         android:textStyle="bold"
         android:layout_marginStart="30dp"

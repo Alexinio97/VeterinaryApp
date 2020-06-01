@@ -1,23 +1,87 @@
 import React, { Component } from 'react';
 import './pageStyling/animalPage.css';
 import { storage } from '../firebaseConfig/config';
-import { Form, Spinner, Card,  Alert, Button, Modal } from 'react-bootstrap';
+import { Form, Spinner, Card,  Alert, Button, Modal, Tabs, Tab } from 'react-bootstrap';
 import { Col,Row} from 'react-bootstrap';
 import { animalService } from '../services/animal.service';
 import { format } from 'date-fns/esm';
 import { fromUnixTime } from 'date-fns';
-import MaterialTable, { MTableBody } from 'material-table';
-import { InputAdornment, Input, Tooltip } from '@material-ui/core';
+import MaterialTable from 'material-table';
+import { InputAdornment, Input } from '@material-ui/core';
 import { inventoryService } from '../services/inventory.service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {faSyringe} from '@fortawesome/free-solid-svg-icons';
+import {faSyringe,faFileInvoice, faCheckCircle} from '@fortawesome/free-solid-svg-icons';
+import ReactPDF, { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image, BlobProvider, pdf } from '@react-pdf/renderer';
+import logo from '../Logo.png';
+import { notifications } from '../helpers/notification';
 import { medicService } from '../services/medic.service';
+
+const styles = StyleSheet.create({
+    page: {
+      flexDirection: 'col',
+      backgroundColor: '#E4E4E4'
+    },
+    section: {
+      margin: 10,
+      padding: 5,
+      fontSize: 15,
+      backgroundColor: "#777",
+    },
+    image: {
+        width: 150,
+        height: 150,
+        position: "absolute",
+        right: 0,
+        bottom: 0,
+    },
+    title: {
+        fontSize: 40,
+        textAlign: "center"
+    },
+    description: {
+        flexDirection: "row",
+        margin: 10,
+        padding: 5,
+        fontSize: 15,
+        backgroundColor: "#777",  
+    }
+  });
+
+  const Invoice  = props =>(
+    <Document>
+        <Page size="A4" style={styles.page}>
+        <View style={styles.title}>
+            <Text style={{marginTop:"5"}}> Factura </Text>
+        </View>
+        <Text style={{fontSize:"20",marginTop:"70",marginLeft:"10"}}>Date facturare</Text>
+        <View style={styles.section}>  
+            <Text style={{margin:"5"}}>Nume animal: {props.data.animalName}</Text>
+            <Text style={{margin:"5"}}>Nume client: {props.data.clientName}</Text>
+            <Text style={{margin:"5"}}>Email client: {props.data.clientEmail}</Text>
+            <Text style={{margin:"5"}}>Data: {format(fromUnixTime(props.data.startTime.seconds),"dd/MM/yyyy")}</Text>
+        </View>
+        <Text style={{fontSize:"20",marginTop:"90",marginBottom:"5",marginLeft:"10"}}>Descriere</Text>
+        <View style={styles.description}>
+            <View style={{padding:"10",margin:"10",}}>
+                <Text style={{margin:"5"}}>Actiune efectuata: {props.data.type}</Text>
+                <Text style={{margin:"5"}}>Pret: {props.data.price} lei</Text>
+            </View>
+            <View style={{padding:"10",margin:"10",}}>
+                <Text style={{margin:"5"}}>Durata: {props.data.duration} minute</Text> 
+                <Text style={{margin:"5"}}>Total: {props.data.price} lei</Text> 
+            </View>
+        </View>
+            <Image src={logo} style={styles.image}/>
+        </Page>
+    </Document>
+)
 
 export class AnimalPage extends Component{
     constructor(props){
         super(props);
         this.state = {
             clientId:null,
+            clientEmail:null,
             animal:null,
             loading:true,
             imgUrl:null,
@@ -28,9 +92,16 @@ export class AnimalPage extends Component{
             // meds state
             showMedsModal:false,
             rowData:null,
+            //invoice data
+            invoiceData:null,
+            downloadAlert:false,
+            sendSucces:false,
+            // animal treatments
+            treatments:[],
         }
         this.renderAnimalProfile = this.renderAnimalProfile.bind(this);
         this.getAnimalPhoto = this.getAnimalPhoto.bind(this);
+        this.handleInvoice = this.handleInvoice.bind(this);
     }
 
     async componentDidMount(){
@@ -41,12 +112,14 @@ export class AnimalPage extends Component{
             this.setState({animal: propsReceived.animal,
             clientId: propsReceived.clientId,
             clientName: propsReceived.clientName,
+            clientEmail: propsReceived.clientEmail,
             loading:false,
             imgUrl:url,
         });
         });
         this.populateAnimalAppointments();
         this.populateMeds();
+        this.populateTreatments();
     } 
 
     async getAnimalPhoto(photoName){
@@ -74,6 +147,18 @@ export class AnimalPage extends Component{
     async populateMeds(){
         await inventoryService.getInventoryItems().then(meds => this.setState({meds:meds}));
     }
+    
+    async populateTreatments(){
+        await animalService.getTreatments(this.state.clientId,this.state.animal.Name).then(treatments => {
+            let treatmentsClones = []
+            treatments.map(treatment => {
+                let cloneTreatment = treatment;
+                cloneTreatment.finalDate = new Date(fromUnixTime(treatment.finalDate.seconds));
+                treatmentsClones.push(cloneTreatment);
+            });
+            this.setState({treatments:treatmentsClones})
+        });
+    }
 
     renderAnimalProfile(){
         
@@ -86,7 +171,7 @@ export class AnimalPage extends Component{
                     <Form className="jumbotron">
                         <Form.Group as={Row} controlId="formPlaintextEmail">
                             <Form.Label column sm="5">
-                            Age:
+                            Varsta:
                             </Form.Label>
                             <Col sm="5">
                             <Form.Control plaintext readOnly defaultValue={this.state.animal.Age} />
@@ -94,7 +179,7 @@ export class AnimalPage extends Component{
                         </Form.Group>
                         <Form.Group as={Row} controlId="formPlaintextEmail">
                             <Form.Label column sm="5">
-                            Breed:
+                            Rasa:
                             </Form.Label>
                             <Col sm="5">
                             <Form.Control plaintext readOnly defaultValue={this.state.animal.Breed} />
@@ -102,23 +187,23 @@ export class AnimalPage extends Component{
                         </Form.Group>
                         <Form.Group as={Row} controlId="formPlaintextEmail">
                             <Form.Label column sm="5">
-                                Species:
+                                Specie:
                             </Form.Label>
                             <Col sm="5">
                             <Form.Control plaintext readOnly as="select" disabled="true" value={this.state.animal.Species}>
-                                <option value='0'>Dog</option>
-                                <option value='1'>Cat</option>
+                                <option value='0'>Caine</option>
+                                <option value='1'>Pisica</option>
                             </Form.Control>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row} controlId="formPlaintextEmail">
                             <Form.Label column sm="5">
-                                Neutered:
+                                Sterilizat/Castrat:
                             </Form.Label>
                             <Col sm="5">
                             <Form.Control plaintext readOnly as="select" disabled="true"  name="Neutered" value={this.state.animal.Neutered} >
-                                <option value='0'>Yes</option>
-                                <option value='1'>No</option>
+                                <option value='0'>Da</option>
+                                <option value='1'>Nu</option>
                             </Form.Control>
                             </Col>
                         </Form.Group>
@@ -138,40 +223,129 @@ export class AnimalPage extends Component{
     
 
 
+    handleInvoice(e,data){
+        if(this.state.downloadAlert === true){
+            console.log("Alert is open already!");
+            this.setState({downloadAlert:false,sendSucces:false});
+        }
+        let invoiceData = data;
+        invoiceData["clientEmail"] = this.state.clientEmail;
+        let full_name = this.state.clientName.split("_");
+        invoiceData["clientName"] = full_name[0] + " " + full_name[1];
+        this.setState({invoiceData:invoiceData,downloadAlert:true});
+    }
+    
+    async sendInvoiceToFirebase(){
+        const blob = await pdf(<Invoice data={this.state.invoiceData} />).toBlob();
+        let fileName = this.state.invoiceData.animalName + "-" + format(fromUnixTime(this.state.invoiceData.startTime.seconds),"dd_MM_yyyy_hh_mm");
+        console.log("Uploading invoice.");
+        storage.ref(`${this.state.clientId}/${fileName}`).put(blob).then(() => {
+            console.log("File " + fileName + "uploaded!");
+            medicService.addClientInvoice(this.state.clientId,fileName);
+            this.setState({sendSucces:true});
+        }).catch(err => console.error("Error caught: ",err));
+        notifications.sendNotification(this.state.invoiceData.clientId,"Ati primit o noua factura!");
+    }
+
     renderAnimalHistoryMaterial(){
         const columns = [
-            {title:'Date',field:'startTime',render: rowData => format(fromUnixTime(rowData.startTime.seconds),"dd/MM/yyyy"),editable:'never'},
-            {title:'Appointment type',field:'type',editable:'never'},
-            {title:'Price(€)',field:'price',type:'numeric'}
+            {title:'Data',field:'startTime',render: rowData => format(fromUnixTime(rowData.startTime.seconds),"dd/MM/yyyy"),editable:'never'},
+            {title:'Tipul programarii',field:'type',editable:'never'},
+            {title:'Pret(lei)',field:'price',type:'numeric'}
         ];
         return(
             <MaterialTable
             columns={columns}
+            style={{marginTop:"2%"}}
             data={this.state.animalAppointments}
-            title="Appointment history"
+            title="Istoric programari"
             actions={[
                 {
                 icon: 'save',
-                tooltip: 'Meds used',
+                tooltip: 'Medicamente folosite',
                 onClick: (event, rowData) => this.showMedsUsed(event,rowData)
                 }
             ]}
             components={{
                 Action: props => (
+                <div className="row" style={{marginLeft:"1%"}}>
                 <Button
                     onClick={(event) => props.action.onClick(event, props.data)}
                     variant="contained"
                     style={{textTransform: 'none'}}
                     size="small"
-                    title="Meds used"
+                    title="Mediccamente folosite"
                 >
                     <FontAwesomeIcon icon={faSyringe} color="blue"/>
                 </Button>
+                <Button
+                    onClick={(event) => this.handleInvoice(event, props.data)}
+                    variant="contained"
+                    style={{textTransform: 'none'}}
+                    size="small"
+                    title="Genereaza factura"
+                >
+                    <FontAwesomeIcon icon={faFileInvoice} color="green"/>
+                </Button>
+                </div>
                 )
             }}
             />
         )
     }
+    
+    renderTreatmentsTable(){
+        const columns = [{title:'Medicament',field:'treatment'},
+                        {title:'Data expirarii',field:'finalDate',type:'date'},
+                        {title:'Dozaj(pe zi)',field:'dosage',type:'numeric'},
+                        {title:'Frecventa',field:'frequency',
+                        lookup:{1:'zilnic',2:'o data la 2 zile',3:'o data la 3 zile',4:'o data la 4 zile',7:'saptamanal',31:'lunar'}},
+                    ];
+        
+        return(
+            <MaterialTable
+            columns={columns}
+            title="Tratamente animal"
+            style={{marginTop:"2%"}}
+            data={this.state.treatments}
+            editable={{
+                onRowAdd: (newItem) => 
+                new Promise((resolve)=>
+                setTimeout(async () =>
+                {
+                    resolve();
+                    newItem["animalName"] = this.state.animal.Name;
+                    console.log(newItem);
+                    await animalService.addTreatment(newItem,this.state.clientId,this.state.animal.Id).then( async () => {
+                        //send notification if add was succesfull
+                        await notifications.sendNotification(this.state.clientId,"A fost adaugat un nou tratament pentru " + this.state.animal.Name);
+                    }).catch("Nu a putut fii adaugat tratamentul.");
+                    this.populateTreatments();
+                },600)),
+                onRowDelete:(oldItem) => 
+                new Promise((resolve)=>
+                setTimeout(()=>
+                {
+                    resolve();
+                    animalService.deleteTreatment(oldItem,this.state.clientId,this.state.animal.Id);
+                    this.populateTreatments();
+                })),
+                onRowUpdate: (newItem,oldItem) =>
+                new Promise((resolve)=>
+                setTimeout( async ()=>
+                {
+                    resolve();
+                    if(typeof(newItem.finalDate) === "string")
+                        newItem.finalDate = new Date(newItem.finalDate);
+
+                    await animalService.updateTreatment(newItem,this.state.clientId,this.state.animal.Id);
+                    this.populateTreatments();
+                },600)) 
+            }}
+            />
+        )
+    }
+
 
     render() {
         let appMedsModal = () => this.setState({showMedsModal:false})
@@ -191,7 +365,31 @@ export class AnimalPage extends Component{
                 <div className="row">
                     <div className="col-4">{profileData}</div>
                     <div className="col-8">
-                    {(this.state.animalAppointments.length > 0) ? this.renderAnimalHistoryMaterial() : <h3>This animal had no appointments yet.</h3>}
+                    {(this.state.downloadAlert === true) ? 
+                        <Alert variant="info" onClose={() => this.setState({downloadAlert:false,sendSucces:false})} dismissible>
+                        <Alert.Heading>Factura</Alert.Heading>
+                        <div className="row">
+                            <PDFDownloadLink className="col-sm" document={<Invoice data={this.state.invoiceData} />} 
+                                fileName={this.state.invoiceData.animalName + "-" + format(fromUnixTime(this.state.invoiceData.startTime.seconds),"dd_MM_yyyy")}>
+                            {({ blob, url, loading, error }) => (loading ? 'Incarcare document...' : 'Descarca acum!')}
+                            </PDFDownloadLink>
+                            {(this.state.sendSucces === false) ?
+                            <Button className="col-sm" variant="secondary" onClick={() => this.sendInvoiceToFirebase()}>
+                                Trimite factura la client
+                            </Button> : <FontAwesomeIcon className="col-sm" icon={faCheckCircle} size="3x"/>
+                            }  
+                        </div>         
+                        </Alert>
+                         : ""}
+                        <Tabs defaultActiveKey="history" id="animalPageTabs">
+                            <Tab eventKey="history" title="Istoric">
+                                {(this.state.animalAppointments.length > 0) ? this.renderAnimalHistoryMaterial() : <h3>Acest animal nu a avut programari inca.</h3>}
+                            </Tab>
+                            <Tab eventKey="treatments" title="Tratamente">
+                                {this.renderTreatmentsTable()}
+                            </Tab>
+                        </Tabs>
+                            
                     </div>
                 </div>
             </div>
@@ -240,8 +438,8 @@ export class ModalAppointmentMeds extends Component{
         let medsLookUp = this.getMedsLookup();;    
         // populate meds for a specific appointment 
         
-        const columns = [{title:'Medicine administrated',field:'med', lookup:medsLookUp},
-            {title:'Quantity(g)',field:'quantity',type:'numeric',
+        const columns = [{title:'Medicamente folosite',field:'med', lookup:medsLookUp},
+            {title:'Cantitate(g)',field:'quantity',type:'numeric',
             editComponent: props => (
                 <Input
                 endAdornment={<InputAdornment position="end">g</InputAdornment>}
@@ -254,7 +452,7 @@ export class ModalAppointmentMeds extends Component{
         return(
             <MaterialTable
             columns={columns}
-            title="Meds used"
+            title="Medicamente folosite"
             style={{marginBottom:'10px'}}
             data={this.state.appointmentMeds}
             editable={{
@@ -319,10 +517,10 @@ export class ModalAppointmentMeds extends Component{
         return(
             <Modal {...this.props} dialogClassName="medsUsedModal" >
                 <Modal.Header closeButton>
-                    <Modal.Title>Medicine used</Modal.Title>
+                    <Modal.Title>Adaugati medicamentele folosite</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                        {(this.state.showAlert) ? this.renderAlert("Not enough meds on stock!") : ""}
+                        {(this.state.showAlert) ? this.renderAlert("Nu exista o cantitate suficienta pe stoc!") : ""}
                         {this.renderMedsTable()}
                 </Modal.Body>
                 <Modal.Footer>

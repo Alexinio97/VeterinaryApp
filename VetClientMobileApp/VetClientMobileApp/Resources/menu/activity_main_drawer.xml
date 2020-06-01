@@ -7,31 +7,31 @@
         <item
             android:id="@+id/nav_appointments"
             android:icon="@drawable/calendar"
-            android:title="Appointments" />
+            android:title="Progamari" />
         <item
             android:id="@+id/nav_medics"
             android:icon="@drawable/medics"
-            android:title="Medics" />
+            android:title="Medici" />
         <item
             android:id="@+id/nav_pets"
             android:icon="@drawable/animals"
-            android:title="Pets" />
+            android:title="Animale" />
         <item
-            android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
+            android:id="@+id/nav_pharmacies"
+            android:icon="@drawable/pharmacies"
+            android:title="Farmacii din zona" />
     </group>
 
     <item android:title="Communicate">
         <menu>
             <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
+                android:id="@+id/nav_invoice"
+                android:icon="@drawable/invoice"
+                android:title="Facturi" />
             <item
                 android:id="@+id/nav_logout"
                 android:icon="@drawable/logout"
-                android:title="Log out" />
+                android:title="Deconectare" />
         </menu>
     </item>
 

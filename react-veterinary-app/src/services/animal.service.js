@@ -1,5 +1,4 @@
 import { db } from '../firebaseConfig/config';
-import { auth } from 'firebase';
 import { fromUnixTime } from 'date-fns';
 
 const medicId = localStorage.getItem("medicId");
@@ -10,6 +9,11 @@ export const animalService = {
     DeleteAnimal,
     AddAnimal,
     getAnimalAppointments,
+    // treatments
+    getTreatments,
+    addTreatment,
+    deleteTreatment,
+    updateTreatment,
 }
 
 
@@ -75,6 +79,48 @@ async function getAnimalAppointments(clientId,animalName){
     }).catch( err => console.error("Error caught!",err));
 }
 
+// treatment functions
+async function getTreatments(clientId,animalName){
+    var treatments = []
+    return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Treatments")
+    .where("animalName","==",animalName).get().then( querySnapshot => {
+        querySnapshot.forEach(function(doc) {
+            var newTreatment = doc.data();
+            newTreatment["Id"] = doc.id;
+            treatments.push(newTreatment);
+        });
+        return treatments;
+    }).catch( err => console.log("Error caught: " + err));
+}
+
+async function addTreatment(newTreatment,clientId){
+    return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).
+    collection("Treatments").add(newTreatment).then(function() {
+        console.log("Document successfully written!");
+    }).catch(function(error) {
+        console.error("Error adding document: ", error);
+    });
+}
+
+async function deleteTreatment(oldTreatment,clientId){
+    return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId)
+    .collection("Treatments").doc(oldTreatment.Id).delete().then(function() {
+        console.log("Document successfully deleted!");
+    }).catch(function(error) {
+        console.error("Error adding document: ", error);
+    });
+}
+
+async function updateTreatment(newTreatment,clientId) {
+    let treatmentId = newTreatment.Id;
+    delete newTreatment['Id'];
+    return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId)
+    .collection("Treatments").doc(treatmentId).update(newTreatment).then(function() {
+        console.log("Document successfully updated!");
+    }).catch(function(error) {
+        console.error("Error updating document: ", error);
+    });
+}
 
 // function logout() {
 //     localStorage.removeItem('user');

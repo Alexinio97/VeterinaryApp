@@ -28,12 +28,13 @@ namespace VetClientMobileApp.Activities
         private FirebaseFirestore _firestoreDb;
         private ListView medicListView;
         private readonly StorageService _storageService;
+        private readonly FirebaseFunctionsService _functionsService;
         public MedicActivity()
         {
             _userService = new UserService();
             _medicsFetched = new List<Medic>();
             _storageService = new StorageService();
-            
+            _functionsService = new FirebaseFunctionsService(this, this);
         }
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -79,7 +80,7 @@ namespace VetClientMobileApp.Activities
                     newMedic.FirstName = document.Get("FirstName").ToString();
                     newMedic.LastName = document.Get("LastName").ToString();
                     newMedic.Phone = document.Get("Phone").ToString();
-                    newMedic.Photo = document.Get("Photo").ToString();
+                    newMedic.Photo = document.GetString("Photo");
                     var scheduleReceived = document.Get("Schedule");
                     
                     if(scheduleReceived != null)
@@ -109,26 +110,82 @@ namespace VetClientMobileApp.Activities
             mapClient.Put("FirstName", clientLoggedData.FirstName);
             mapClient.Put("LastName", clientLoggedData.LastName);
             mapClient.Put("Phone", clientLoggedData.Phone);
+            mapClient.Put("NotificationToken", clientLoggedData.Token);
             
-            AlertDialog.Builder subscribeDialog = new AlertDialog.Builder(this);
-            subscribeDialog.SetTitle("Subscribe");
-            subscribeDialog.SetMessage($"Do you want to subscribe to {medicSelected.FirstName}, {medicSelected.LastName}?");
+            if(clientLoggedData.MedicSubscribed != null)
+            {
+                if(clientLoggedData.MedicSubscribed.Id == medicSelected.Id)
+                {
+                    AlertDialog.Builder alreadySubscribedDialog = new AlertDialog.Builder(this);
+                    alreadySubscribedDialog.SetTitle("Abonare");
+                    alreadySubscribedDialog.SetMessage("Sunteti deja abonat la acest medic!");
+                    alreadySubscribedDialog.SetNeutralButton("Ok", delegate
+                     {
+                         alreadySubscribedDialog.Dispose();
+                     });
+                    alreadySubscribedDialog.Show();
+                }
+                else
+                {
+                    AlertDialog.Builder subscribeToAnotherMedic = new AlertDialog.Builder(this);
+                    subscribeToAnotherMedic.SetTitle("Abonare la alt medic");
+                    subscribeToAnotherMedic.SetMessage($"Doriti sa va abonati la {medicSelected.FirstName}, {medicSelected.LastName}?");
+
+                    subscribeToAnotherMedic.SetPositiveButton("Da", async delegate
+                     {
+                      
+                         Models.Notification newNotif = new Models.Notification()
+                         {
+                             Type = clientLoggedData.MedicSubscribed.Id,
+                             MedicId = medicSelected.Id,
+                             Description = clientLoggedData.Id,
+                         };
+                         await _functionsService.AddNotification(newNotif, "medicMigrate");
+
+                         // TODO: check if client has been added
+                         clientLoggedData.MedicSubscribed = medicSelected;
+                         await _storageService.SaveClientDataLocal(clientLoggedData);
+                         subscribeToAnotherMedic.Dispose();
+                     });
+                    subscribeToAnotherMedic.SetNegativeButton("Nu", delegate
+                     {
+                         subscribeToAnotherMedic.Dispose();
+                     });
+
+                    subscribeToAnotherMedic.Show();
+                }
+            }
+            else 
+            { 
+                AlertDialog.Builder subscribeDialog = new AlertDialog.Builder(this);
+                subscribeDialog.SetTitle("Abonare");
+                subscribeDialog.SetMessage($"Doriti sa va abonati la {medicSelected.FirstName}, {medicSelected.LastName}?");
             
-            subscribeDialog.SetPositiveButton("Yes",async delegate
-             {
-                 // add Client to that medic DataBase
-                 _firestoreDb.Collection("Medics").Document(medicSelected.Id).Collection("Clients").Document(clientLoggedData.Id).Set(mapClient)
-                            .AddOnFailureListener(this);
-                 clientLoggedData.MedicSubscribed = medicSelected;
-                 // storing also medic that the user has subscribed to
-                 await _storageService.SaveClientDataLocal(clientLoggedData);
-                 subscribeDialog.Dispose();
-             });
-            subscribeDialog.SetNegativeButton("No", delegate
-             {
-                 subscribeDialog.Dispose();
-             });
-            subscribeDialog.Show();
+                subscribeDialog.SetPositiveButton("Da",async delegate
+                 {
+                     // add Client to that medic DataBase
+                     _firestoreDb.Collection("Medics").Document(medicSelected.Id).Collection("Clients").Document(clientLoggedData.Id).Set(mapClient)
+                                .AddOnFailureListener(this);
+                     clientLoggedData.MedicSubscribed = medicSelected;
+                     // storing also medic that the user has subscribed to
+                     await _storageService.SaveClientDataLocal(clientLoggedData);
+                     Models.Notification newNotif = new Models.Notification()
+                     {
+                         Description = $"{clientLoggedData.FirstName}, {clientLoggedData.LastName} s-a abonat la dumneavoastra.",
+                         Type = "Client nou",
+                         Timestamp = DateTime.Now.ToLocalTime(),
+                         MedicId = clientLoggedData.MedicSubscribed.Id,
+                     };
+
+                     await _functionsService.AddNotification(newNotif, "notificationCreate");
+                     subscribeDialog.Dispose();
+                 });
+                subscribeDialog.SetNegativeButton("Nu", delegate
+                 {
+                     subscribeDialog.Dispose();
+                 });
+                subscribeDialog.Show();
+            }
         }
 
         public void OnFailure(Java.Lang.Exception e)
