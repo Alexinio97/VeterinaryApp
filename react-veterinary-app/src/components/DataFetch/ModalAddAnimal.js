@@ -94,6 +94,7 @@ export default class ModalAddAnimal extends Component{
 
     handleSave() {
         const animal = this.state;
+        delete animal["errors"];
         let result = this.validateInput(animal);
         if(result === false){
             return;

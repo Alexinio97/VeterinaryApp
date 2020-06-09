@@ -33,15 +33,15 @@ export class Inventory extends Component{
         });
         console.log(categoryLookup);
         const columns=[
-            {title:'Name',field:'name'},
-            {title:'Category',field:'category',
+            {title:'Nume',field:'name'},
+            {title:'Categorie',field:'category',
             lookup:categoryLookup},
-            {title:'Indications',field:'indications'},
-            {title:'Quantity(g)',field:'quantity',type:'numeric'}
+            {title:'Indicatii',field:'indications'},
+            {title:'Cantitate(g)',field:'quantity',type:'numeric'}
         ];
         return(
             <MaterialTable
-                title="Meds inventory"
+                title="Stoc medical"
                 columns={columns}
                 data={this.state.items}
                 editable={{

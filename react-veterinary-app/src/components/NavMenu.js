@@ -14,7 +14,7 @@ import { db } from '../firebaseConfig/config';
 import { auth } from 'firebase';
 import { medicService } from '../services/medic.service';
 import { formatDistance } from 'date-fns/esm';
-import moment from 'moment';
+
 
 export class NavMenu extends Component {
   static displayName = NavMenu.name;

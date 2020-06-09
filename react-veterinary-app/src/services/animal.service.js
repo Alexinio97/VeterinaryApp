@@ -1,7 +1,8 @@
 import { db } from '../firebaseConfig/config';
 import { fromUnixTime } from 'date-fns';
+import { auth } from 'firebase';
 
-const medicId = localStorage.getItem("medicId");
+
 
 export const animalService = {
     getUsersAnimals,
@@ -18,6 +19,7 @@ export const animalService = {
 
 
 async function getUsersAnimals(clientId) {
+    const medicId = auth().currentUser.uid;
     var animals = []
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").get().then( querySnapshot => {
         querySnapshot.forEach(function(doc) {
@@ -31,6 +33,7 @@ async function getUsersAnimals(clientId) {
 }
 
 async function UpdateAnimal(animal,clientId) {
+    const medicId = auth().currentUser.uid;
     var animalId = animal.Id;
     delete animal['Id'];
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").doc(animalId).set(animal).then(function() {
@@ -41,6 +44,7 @@ async function UpdateAnimal(animal,clientId) {
 }
 
 async function AddAnimal(animal,clientId) {
+    const medicId = auth().currentUser.uid;
     delete animal['Id'];
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").add(animal).then(function() {
         console.log("Document successfully written!");
@@ -51,6 +55,7 @@ async function AddAnimal(animal,clientId) {
 
 async function DeleteAnimal(animalId,clientId)
 {
+    const medicId = auth().currentUser.uid;
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Animals").doc(animalId).delete().then(function() {
         console.log("Document successfully deleted!");
     }).catch(function(error) {
@@ -61,6 +66,7 @@ async function DeleteAnimal(animalId,clientId)
 
 // method that returns animal appointments that have been executed already
 async function getAnimalAppointments(clientId,animalName){
+    const medicId = auth().currentUser.uid;
     let appointments = [];
     let appointmentsRef = db.collection('Medics').doc(medicId).collection("Appointments");
     
@@ -81,6 +87,7 @@ async function getAnimalAppointments(clientId,animalName){
 
 // treatment functions
 async function getTreatments(clientId,animalName){
+    const medicId = auth().currentUser.uid;
     var treatments = []
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).collection("Treatments")
     .where("animalName","==",animalName).get().then( querySnapshot => {
@@ -94,6 +101,7 @@ async function getTreatments(clientId,animalName){
 }
 
 async function addTreatment(newTreatment,clientId){
+    const medicId = auth().currentUser.uid;
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId).
     collection("Treatments").add(newTreatment).then(function() {
         console.log("Document successfully written!");
@@ -103,6 +111,7 @@ async function addTreatment(newTreatment,clientId){
 }
 
 async function deleteTreatment(oldTreatment,clientId){
+    const medicId = auth().currentUser.uid;
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId)
     .collection("Treatments").doc(oldTreatment.Id).delete().then(function() {
         console.log("Document successfully deleted!");
@@ -112,6 +121,7 @@ async function deleteTreatment(oldTreatment,clientId){
 }
 
 async function updateTreatment(newTreatment,clientId) {
+    const medicId = auth().currentUser.uid;
     let treatmentId = newTreatment.Id;
     delete newTreatment['Id'];
     return db.collection('Medics').doc(medicId).collection("Clients").doc(clientId)

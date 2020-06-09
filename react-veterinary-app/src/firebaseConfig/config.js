@@ -5,7 +5,7 @@ import "firebase/firebase-storage";
 import "firebase/messaging";
 
 var firebaseConfig = {
-    
+
 };
 // Initialize Firebase
 export const firebaseApiKey = "";
