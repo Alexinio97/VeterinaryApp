@@ -5,7 +5,6 @@ import { Modal } from 'react-bootstrap';
 import { Form } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import  { animalService } from '../../services/animal.service';
-import { send, init } from 'emailjs-com';
 import { ro } from 'date-fns/locale'
 
 export default class AppointmentAdd extends Component{
@@ -110,11 +109,11 @@ export default class AppointmentAdd extends Component{
         let isValid = true;
         if(appointment.duration < 15 )
         {
-            errors["duration"] = "Please add valid duration!(over 15 minutes)";
+            errors["duration"] = "Adaugati o durata valida!(peste 15 minute)";
             isValid = false;
         }
         if(appointment.price < 0){
-            errors["price"] = "Please add positive values or leave it empty!";
+            errors["price"] = "Adaugati valori pozitive sau lasati necompletat!";
             isValid = false;
         }
 

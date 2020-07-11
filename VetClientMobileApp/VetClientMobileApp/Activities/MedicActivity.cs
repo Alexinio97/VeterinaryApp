@@ -15,6 +15,7 @@ using Firebase.Auth;
 using Firebase.Firestore;
 using Java.Util;
 using VetClientMobileApp.Adapter;
+using VetClientMobileApp.EventListeners;
 using VetClientMobileApp.Models;
 using VetClientMobileApp.Services;
 
@@ -29,6 +30,10 @@ namespace VetClientMobileApp.Activities
         private ListView medicListView;
         private readonly StorageService _storageService;
         private readonly FirebaseFunctionsService _functionsService;
+        private ProgressDialog progress;
+        private Medic medicSelected;
+        private Client clientLoggedData;
+
         public MedicActivity()
         {
             _userService = new UserService();
@@ -44,6 +49,12 @@ namespace VetClientMobileApp.Activities
 
 
             medicListView = FindViewById<ListView>(Resource.Id.lstView_medics);
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Asteptati...");
+            progress.SetCancelable(false);
+            progress.Show();
             FetchData();
         }
 
@@ -97,13 +108,14 @@ namespace VetClientMobileApp.Activities
                 }
                 medicListView.Adapter = new MedicAdapter(this, _medicsFetched.ToArray());
                 medicListView.ItemClick += MedicListView_ItemClick;
+                progress.Dismiss();
             }
         }
 
         private async void MedicListView_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
-            var medicSelected = _medicsFetched[e.Position];
-            var clientLoggedData = await _storageService.GetClientDataLocal();
+            medicSelected = _medicsFetched[e.Position];
+            clientLoggedData = await _storageService.GetClientDataLocal();
             // create hashMap in order to insert the client into the selected medic database
             HashMap mapClient = new HashMap();
             mapClient.Put("Email", clientLoggedData.Email);
@@ -141,10 +153,9 @@ namespace VetClientMobileApp.Activities
                              Description = clientLoggedData.Id,
                          };
                          await _functionsService.AddNotification(newNotif, "medicMigrate");
-
+                         await CheckIfClientExistsAsync();
                          // TODO: check if client has been added
-                         clientLoggedData.MedicSubscribed = medicSelected;
-                         await _storageService.SaveClientDataLocal(clientLoggedData);
+
                          subscribeToAnotherMedic.Dispose();
                      });
                     subscribeToAnotherMedic.SetNegativeButton("Nu", delegate
@@ -185,6 +196,57 @@ namespace VetClientMobileApp.Activities
                      subscribeDialog.Dispose();
                  });
                 subscribeDialog.Show();
+            }
+        }
+
+        private async System.Threading.Tasks.Task CheckIfClientExistsAsync()
+        {
+            TaskCompletionListener clientExistsListener = new TaskCompletionListener();
+            clientExistsListener.Succes += ClientExistsListener_Succes;
+            clientExistsListener.Failure += ClientExistsListener_Failure;
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Se efectueaza migrarea..Asteptati...");
+            progress.SetCancelable(false);
+            progress.Show();
+            await System.Threading.Tasks.Task.Delay(5000);
+            _firestoreDb.EnableNetwork();
+            _firestoreDb.Collection("Medics").Document(medicSelected.Id).Collection("Clients").Document(clientLoggedData.Id).Get()
+                .AddOnSuccessListener(clientExistsListener).AddOnFailureListener(clientExistsListener);
+        }
+
+        private void ClientExistsListener_Failure(object sender, EventArgs e)
+        {
+            var exception = (Java.Lang.Exception)sender;
+            Console.WriteLine("Exception caught!", exception);
+            Toast.MakeText(this, "Nu s-a putut efectua migrarea.", ToastLength.Long).Show();
+            progress.Dismiss();
+        }
+
+        private async void ClientExistsListener_Succes(object sender, EventArgs e)
+        {
+            var documentSnap = (DocumentSnapshot)sender;
+            if(documentSnap.Exists())
+            {
+                clientLoggedData.MedicSubscribed = medicSelected;
+                await _storageService.SaveClientDataLocal(clientLoggedData);
+                // send notification to the new medic
+                Models.Notification subscribeNotif = new Models.Notification()
+                {
+                    Description = $"{clientLoggedData.FirstName}, {clientLoggedData.LastName} s-a abonat la dumneavoastra.",
+                    Type = "Client nou",
+                    Timestamp = DateTime.Now.ToLocalTime(),
+                    MedicId = clientLoggedData.MedicSubscribed.Id,
+                };
+                await _functionsService.AddNotification(subscribeNotif, "notificationCreate");
+                progress.Dismiss();
+                Toast.MakeText(this, "Migrarea efectuata cu succes!", ToastLength.Long).Show();
+            }
+            else
+            {
+                Toast.MakeText(this, "Migrarea nu a fost efectuata, relogati-va!", ToastLength.Long).Show();
+                progress.Dismiss();
             }
         }
 

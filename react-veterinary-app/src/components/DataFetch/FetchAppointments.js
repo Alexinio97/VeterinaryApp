@@ -70,7 +70,7 @@ export class Appointments extends Component{
         console.log(selectedDay, this.state.maxDate);
         if(selectedDay >= this.state.maxDate || selectedDay < this.state.minDate)
         {
-            alert("Appointment range has been exceeded!");
+            alert("Ziua maxima a fost depasita!");
             return;
         }
         if(selectedDay.getHours() === 0)
@@ -83,7 +83,7 @@ export class Appointments extends Component{
             let dateAppointEnd = new Date(fromUnixTime(appoint.endTime.seconds));
             if(dateAppointStart.getTime() === selectedDay.getTime() || dateAppointEnd.getTime() === endTime.getTime())
             {
-                alert("There is an appointment there already!");
+                alert("Exista deja o programare!");
                 isSlotOccupied = true;
             }
         });
@@ -147,7 +147,7 @@ export class Appointments extends Component{
 
     async handleDelete(){
         await medicService.deleteAppointment(this.state.appointToDelete.Id);
-        this.sendNotification(this.state.appointToDelete.clientId,"Appointment for " +this.state.appointToDelete.animalName + " at " + format(new Date(fromUnixTime(this.state.appointToDelete.startTime.seconds)),"dd/MM/yyyy k:mm a") + " has been cancelled, please reschedule.")
+        notifications.sendNotification(this.state.appointToDelete.clientId,"Programare pentru " +this.state.appointToDelete.animalName + " la " + format(new Date(fromUnixTime(this.state.appointToDelete.startTime.seconds)),"dd/MM/yyyy k:mm a") + " a fost anulata, reprogramati.")
         this.populateAppointments();
         this.setState({deleteModal:false});
     }
@@ -160,18 +160,18 @@ export class Appointments extends Component{
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle id="alert-dialog-title">Delete Appointment</DialogTitle>
+                <DialogTitle id="alert-dialog-title">Stergere programare</DialogTitle>
                 <DialogContent>
                 <DialogContentText id="alert-dialog-description">
-                    Are you sure you want to delete this appointment?
+                    Sunteti sigur ca vreti sa stergeti aceasta programare?
                 </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                 <Button onClick={() => this.setState({deleteModal:false})} color="primary">
-                    No
+                    Nu
                 </Button>
                 <Button onClick={this.handleDelete} color="primary" autoFocus>
-                    Yes
+                    Da
                 </Button>
                 </DialogActions>
             </Dialog>
@@ -182,7 +182,7 @@ export class Appointments extends Component{
         // TODO: send notification to client
         this.setState({showAddModal:false});
         await medicService.addAppointment(appointment);
-        alert("Appointment made!")
+        alert("Programare efectuata!")
         notifications.sendNotification(appointment.clientId, "Aveti programare noua in " + format(appointment.startTime,"dd/MM/yyyy k:mm a"));
         await this.populateAppointments(this.state.selectedDay);
     }
@@ -195,6 +195,7 @@ export class Appointments extends Component{
             finishHour:medic.Schedule.end
             })
         })
+        
     }
 
     renderScheduler(){

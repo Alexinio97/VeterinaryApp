@@ -31,6 +31,7 @@ namespace VetClientMobileApp
     {
         private readonly StorageService _storageService;
         private readonly IUserService _userService;
+        private ProgressDialog progress;
         // array for setting multiple reminders for all treatments
         List<PendingIntent> _pendingIntents;
 
@@ -59,17 +60,16 @@ namespace VetClientMobileApp
             Android.Support.V7.Widget.Toolbar toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
 
-            FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
+            //FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
             _treatmentsView = FindViewById<ListView>(Resource.Id.lstView_treatments);
             clientLogged = await _storageService.GetClientDataLocal();
-            fab.Click += FabOnClick;
+            //fab.Click += FabOnClick;
             // check google play services
             msgText = FindViewById<TextView>(Resource.Id.msgText);
           
             IsPlayServicesAvailable();
             CreateNotificationChannel();
-            FetchTreatments();
-
+           
             // alarm set 
             
 
@@ -80,6 +80,23 @@ namespace VetClientMobileApp
 
             NavigationView navigationView = FindViewById<NavigationView>(Resource.Id.nav_view);
             navigationView.SetNavigationItemSelectedListener(this);
+
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Se afiseaza tratamentele...");
+            progress.SetCancelable(false);
+            progress.Show();
+            FetchTreatments();
+            var swipeRefresh = FindViewById<SwipeRefreshLayout>(Resource.Id.swipeRefreshLayout);
+
+            swipeRefresh.Refresh += delegate (object sender, EventArgs e)
+            {
+                Intent intent = this.Intent;
+                this.Finish();
+                intent.AddFlags(ActivityFlags.NoAnimation);
+                this.StartActivity(intent);
+            };
         }
         // verify that Google Play Services is available before the app attempts to use FCM services
         public bool IsPlayServicesAvailable()
@@ -120,6 +137,7 @@ namespace VetClientMobileApp
         {
             var exception = (Java.Lang.Exception)sender;
             Console.WriteLine("Exception caught: ", exception.ToString());
+            Toast.MakeText(this, "Eroare la descarcarea tratamentelor, relogati-va!", ToastLength.Long).Show();
         }
 
         private void TreatmentsListener_Succes(object sender, EventArgs e)
@@ -153,33 +171,36 @@ namespace VetClientMobileApp
                         return;
                     }
                     _treatmentsView.Adapter = new TreatmentAdapter(_treatments.ToArray(), this);
-                    _treatmentsView.ItemClick += _treatmentsView_ItemClick;
-                    
+                    _treatmentsView.ItemClick += TreatmentsView_ItemClick;
+                    progress.Dismiss();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error caught: ", ex.Message);
                     Toast.MakeText(this, "Eroare la vizualizarea tratamentelor!", ToastLength.Long);
+                    progress.Dismiss();
                 }
+                
             }
+            progress.Dismiss();
         }
 
-        private async void _treatmentsView_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
+        private void TreatmentsView_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
             var treatment = _treatments[e.Position];
             var alarmIntent = new Intent(this, typeof(AlarmReceiver));
             alarmIntent.PutExtra("title", "Tratament " + treatment.Name);
-            alarmIntent.PutExtra("message", "Nu uitati tratamentul pentru " + treatment.AnimalName + " de " + treatment.Dosage.ToString() + " pe zi.");
+            alarmIntent.PutExtra("message", "Nu uitati tratamentul pentru " + treatment.AnimalName + ", " + treatment.Dosage.ToString() + " pe zi.");
 
             var pendingIntent = PendingIntent.GetBroadcast(this, e.Position, alarmIntent,
                 PendingIntentFlags.UpdateCurrent);
 
             Java.Util.Calendar alarmTrigger = Java.Util.Calendar.Instance;
 
-            
+
             // Set the alarm
             var alarmManager = GetSystemService(AlarmService).JavaCast<AlarmManager>();
-            if(treatment.AlarmTime != null )
+            if (treatment.AlarmTime != null)
             {
                 var dialogAlarm = new Android.Support.V7.App.AlertDialog.Builder(this);
                 dialogAlarm.SetTitle("Setare sau anulare alarma");
@@ -203,8 +224,8 @@ namespace VetClientMobileApp
             {
                 SetTime(alarmTrigger, treatment, pendingIntent, alarmManager, e.Position);
             }
-            
-            
+
+
         }
 
         private void SetTime(Calendar alarmTrigger,Treatment treatment,PendingIntent pendingIntent,AlarmManager alarmManager,int position)
@@ -307,23 +328,18 @@ namespace VetClientMobileApp
             return true;
         }
 
-        public override bool OnOptionsItemSelected(IMenuItem item)
-        {
-            int id = item.ItemId;
-            if (id == Resource.Id.action_settings)
-            {
-                return true;
-            }
+        //public override bool OnOptionsItemSelected(IMenuItem item)
+        //{
+        //    int id = item.ItemId;
+        //    if (id == Resource.Id.action_settings)
+        //    {
+        //        return true;
+        //    }
 
-            return base.OnOptionsItemSelected(item);
-        }
+        //    return base.OnOptionsItemSelected(item);
+        //}
 
-        private void FabOnClick(object sender, EventArgs eventArgs)
-        {
-            View view = (View) sender;
-            Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
-                .SetAction("Action", (Android.Views.View.IOnClickListener)null).Show();
-        }
+        
 
         void renderSnackBar(string message)
         {
@@ -349,7 +365,6 @@ namespace VetClientMobileApp
             }
             else if (id == Resource.Id.nav_pets)
             {
-                
                 StartActivity(typeof(PetsActivity));
             }
             else if (id == Resource.Id.nav_pharmacies)

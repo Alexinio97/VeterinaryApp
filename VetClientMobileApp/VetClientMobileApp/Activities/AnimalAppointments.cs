@@ -35,7 +35,7 @@ namespace VetClientMobileApp.Activities
         private ScheduleAppointmentCollection _appointments;
         private SfSchedule _scheduler;
         private readonly FirebaseFunctionsService _functionsService;
-
+        private ProgressDialog progress;
         public AnimalAppointments()
         {
             _storageService = new StorageService();
@@ -55,8 +55,13 @@ namespace VetClientMobileApp.Activities
             
             SetContentView(Resource.Layout.pet_appointments_main);
             _scheduler = FindViewById<SfSchedule>(Resource.Id.appointments_scheduler);
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Se afiseaza calendarul...");
+            progress.SetCancelable(false);
+            progress.Show();
             FetchAppointmentsWeek();
-                  
             var scheduleHours = GetMedicScheduleHours();
 
             _scheduler.ScheduleView = ScheduleView.WeekView;
@@ -120,17 +125,27 @@ namespace VetClientMobileApp.Activities
 
                         newAppointment.StartTime = startTimeCalendar;
                         newAppointment.EndTime = endTimeCalendar;
-                        newAppointment.Subject = document.Get("type").ToString();
+                        if(document.GetString("clientId").Equals(clientLogged.Id))
+                        {
+                            newAppointment.Subject = document.Get("type").ToString();
+                        }
+                        else
+                        {
+                            newAppointment.Color = Color.Black;
+                        }
+                        
                         newAppointment.Notes = "Durata: " + document.Get("duration").ToString();
                         newAppointment.Location = "Daily vet";
                         
                         _appointments.Add(newAppointment);
                     }
                     _scheduler.ItemsSource = _appointments;
+                    progress.Dismiss();
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine("Error caught: ", ex.Message);
+                    progress.Dismiss();
                     Toast.MakeText(this, "Eroare la vizualizarea programarilor!", ToastLength.Long);
                 }
             }
@@ -277,7 +292,6 @@ namespace VetClientMobileApp.Activities
 
         public double[] GetMedicScheduleHours()
         {
-            // TODO: get medic schedule from database
             double[] scheduleHours = new double[2];
 
             double startHour = double.Parse(clientLogged.MedicSubscribed.Schedule["start"].Replace(":", ","));

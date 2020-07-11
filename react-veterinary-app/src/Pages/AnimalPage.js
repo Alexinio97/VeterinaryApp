@@ -11,7 +11,7 @@ import { InputAdornment, Input } from '@material-ui/core';
 import { inventoryService } from '../services/inventory.service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSyringe,faFileInvoice, faCheckCircle} from '@fortawesome/free-solid-svg-icons';
-import ReactPDF, { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image, BlobProvider, pdf } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image, pdf } from '@react-pdf/renderer';
 import logo from '../Logo.png';
 import { notifications } from '../helpers/notification';
 import { medicService } from '../services/medic.service';
@@ -525,7 +525,7 @@ export class ModalAppointmentMeds extends Component{
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={this.props.onHide}>
-                        Close
+                        Inchide
                     </Button>
                 </Modal.Footer>
             </Modal>

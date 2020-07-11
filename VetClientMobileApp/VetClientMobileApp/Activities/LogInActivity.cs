@@ -15,7 +15,7 @@ using VetClientMobileApp.Services;
 
 namespace VetClientMobileApp.Activities
 {
-    [Activity(Label = "LogInActivity",MainLauncher = true)]
+    [Activity(Label = "Daily vet",MainLauncher = true,Icon ="@mipmap/ic_launcher2")]
     public class LogInActivity : Activity 
     {
         Android.Support.Design.Widget.TextInputEditText password;

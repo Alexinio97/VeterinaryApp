@@ -126,7 +126,7 @@ export default class ModalAddAnimal extends Component{
     
 
     render(){
-        let animalEditOrAdd = (this.props.animal === null) ? "Add" : "Edit";
+        let animalEditOrAdd = (this.props.animal === null) ? "Adauga" : "Editeaza";
         return(
         <Modal {...this.props}>
         <Modal.Header closeButton>
@@ -164,7 +164,7 @@ export default class ModalAddAnimal extends Component{
             </Form.Group>
             {(this.state.Species === 2) ? "" :
             <Form.Group controlId="formGroupNeutered">
-                <Form.Label>Neutered</Form.Label>
+                <Form.Label>Sterilizat/Castrat</Form.Label>
                 
                 <Form.Control as="select"  name="Neutered" value={this.state.Neutered} onChange={this.handleChange}>
                     <option value='0'>Da</option>

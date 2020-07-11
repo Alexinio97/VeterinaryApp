@@ -28,6 +28,7 @@ namespace VetClientMobileApp.Activities
         private ListView animalListView;
         private readonly StorageService _storageService;
         private Client clientLogged;
+        ProgressDialog progress;
         public PetsActivity()
         {
             _userService = new UserService();
@@ -51,6 +52,13 @@ namespace VetClientMobileApp.Activities
             _firestoreDb = _userService.GetDatabase(this);
             animalListView = FindViewById<ListView>(Resource.Id.lstView_Pets);
 
+            
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Asteptati...");
+            progress.SetCancelable(false);
+            progress.Show();
             FetchData();
         }
 
@@ -72,7 +80,7 @@ namespace VetClientMobileApp.Activities
 
         public void OnFailure(Java.Lang.Exception e)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Error caught");
         }
 
         public void OnSuccess(Java.Lang.Object result)
@@ -102,6 +110,7 @@ namespace VetClientMobileApp.Activities
                 animalListView.Adapter = new PetAdapter( animalsFetched.ToArray(),this);
                 animalListView.ItemClick += AnimalListView_ItemClick;
             }
+            progress.Dismiss();
         }
 
         private void AnimalListView_ItemClick(object sender, AdapterView.ItemClickEventArgs e)

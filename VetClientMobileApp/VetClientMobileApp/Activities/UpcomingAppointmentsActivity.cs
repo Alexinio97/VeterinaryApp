@@ -28,6 +28,7 @@ namespace VetClientMobileApp.Activities
         private Client _clientLogged;
         private ListView upcomingAppoints;
         private TextView noAppointsTxt;
+        private ProgressDialog progress;
         public UpcomingAppointmentsActivity()
         {
             _storageService = new StorageService();
@@ -48,6 +49,13 @@ namespace VetClientMobileApp.Activities
             upcomingAppoints = FindViewById<ListView>(Resource.Id.lstView_upcoming_appoints);
             noAppointsTxt = FindViewById<TextView>(Resource.Id.no_upcoming_appoints_txt);
             _firestoreDb = _userService.GetDatabase(this);
+
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Se afiseaza programarile viitoare...");
+            progress.SetCancelable(false);
+            progress.Show();
             GetAllAnimalsAppoints();
         }
 
@@ -81,9 +89,9 @@ namespace VetClientMobileApp.Activities
             }
             else
             {
-                upcomingAppoints.Adapter = new AppointmentAdapter(upcomingAppointments.ToArray(), this,true);
-                
+                upcomingAppoints.Adapter = new AppointmentAdapter(upcomingAppointments.ToArray(), this,true);   
             }
+            progress.Dismiss();
         }
     }
 }

@@ -15,6 +15,8 @@ using Newtonsoft.Json;
 using VetClientMobileApp.Models;
 using VetClientMobileApp.Services;
 using Com.Syncfusion.Schedule;
+using VetClientMobileApp.EventListeners;
+using Firebase.Firestore;
 
 namespace VetClientMobileApp.Activities
 {
@@ -23,10 +25,13 @@ namespace VetClientMobileApp.Activities
     {
         private Animal animalSelected;
         private readonly IUserService _userService;
-       
+        private Client clientLogged;
+        private readonly StorageService _storageService;
+        private ProgressDialog progress;
         public PetProfileActivity()
         {
             _userService = new UserService();
+            _storageService = new StorageService();
         }
         protected async override void OnCreate(Bundle savedInstanceState)
         {
@@ -41,8 +46,9 @@ namespace VetClientMobileApp.Activities
             var pet_neutered = FindViewById<TextView>(Resource.Id.pet_neutered_text);
             var pet_photo = FindViewById<ImageView>(Resource.Id.petProfilePhoto);
 
+            clientLogged = await _storageService.GetClientDataLocal();
 
-            pet_name.Text = "Nume: " +animalSelected.Name;
+            pet_name.Text = "Nume: " + animalSelected.Name;
             pet_age.Text = "Varsta: " + animalSelected.Age.ToString();
             pet_breed.Text = "Specie: " + animalSelected.Breed.ToString();
             pet_neutered.Text = "Sterilizat/Castrat: " + animalSelected.Neutered.ToString();
@@ -56,8 +62,8 @@ namespace VetClientMobileApp.Activities
             var _storage = _userService.GetStorage(this);
 
             var url = await GetFile(animalSelected.Photo, _storage);
-            
-            if(url != null)
+
+            if (url != null)
             {
                 await DisplayPhoto(url.ToString(), pet_photo);
             }
@@ -72,12 +78,16 @@ namespace VetClientMobileApp.Activities
 
         private void MakeAnAppointmentBtn_Click(object sender, EventArgs e)
         {
-            Intent animalAppointments = new Intent(this, typeof(AnimalAppointments));
-            animalAppointments.PutExtra("Animal", JsonConvert.SerializeObject(animalSelected));
-            StartActivity(animalAppointments);
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Va rugam asteptati...");
+            progress.SetCancelable(false);
+            progress.Show();
+            SetMedicScheduleHours();
         }
 
-        public async Task DisplayPhoto(string url,ImageView photo)
+        public async Task DisplayPhoto(string url, ImageView photo)
         {
             ImageService.Instance.LoadUrl(url)
                 .Retry(3, 200)
@@ -91,6 +101,57 @@ namespace VetClientMobileApp.Activities
                 .Child("animalProfilePics")
                 .Child(fileName)
                 .GetDownloadUrlAsync();
+        }
+
+        public void SetMedicScheduleHours()
+        {
+            var firestoreDb = _userService.GetDatabase(this);
+            // get medic schedule
+            TaskCompletionListener medicsListener = new TaskCompletionListener();
+            medicsListener.Succes += MedicsListener_Succes;
+            medicsListener.Failure += MedicsListener_Failure;
+            firestoreDb.Collection("Medics").Document(clientLogged.MedicSubscribed.Id).Get().AddOnSuccessListener(medicsListener)
+                .AddOnFailureListener(medicsListener);
+        }
+
+        private void MedicsListener_Failure(object sender, EventArgs e)
+        {
+            var exception = (Java.Lang.Exception)sender;
+            Console.WriteLine("Exception caught: ", exception.Message);
+        }
+
+        private async void MedicsListener_Succes(object sender, EventArgs e)
+        {
+            double[] scheduleHours = new double[2];
+
+            var snapshot = (DocumentSnapshot)sender;
+            if (snapshot.Exists())
+            {
+                var document = snapshot;
+
+                var scheduleReceived = document.Get("Schedule");
+                if (scheduleReceived != null)
+                {
+                    var dictHasMap = new JavaDictionary<string, string>(scheduleReceived.Handle, Android.Runtime.JniHandleOwnership.DoNotRegister);
+                    foreach (KeyValuePair<string, string> item in dictHasMap)
+                    {
+                        clientLogged.MedicSubscribed.Schedule[item.Key] = item.Value;
+                    }
+
+                }
+                else
+                {
+                    // set some default values
+                    clientLogged.MedicSubscribed.Schedule["start"] = "09:00";
+                    clientLogged.MedicSubscribed.Schedule["end"] = "17:00";
+                }
+
+                await _storageService.SaveClientDataLocal(clientLogged);
+                progress.Dismiss();
+                Intent animalAppointments = new Intent(this, typeof(AnimalAppointments));
+                animalAppointments.PutExtra("Animal", JsonConvert.SerializeObject(animalSelected));
+                StartActivity(animalAppointments);
+            }
         }
     }
 }

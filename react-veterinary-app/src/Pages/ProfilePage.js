@@ -94,21 +94,21 @@ export class ProfilePage extends Component{
         let phoneRegEx = new RegExp("([0-9]{10})$");
 
         if(emailRegEx.test(medic.Email) === false){
-            errors["email"] = "Please input a valid email.";
+            errors["email"] = "Adaugati o adresa de mail corecta.";
             isValid = false;
         }  
         if(scheduleRegEx.test(medic.Schedule.start) === false){
-            errors["start"] = "Please input a valid start time.(e.g 08:00)";
+            errors["start"] = "Va rugam adaugati o ora valida.(exemplu 08:00)";
             isValid = false;
         }
         let result = scheduleRegEx.test(medic.Schedule.end);
         if(result === false){
-            errors["end"] = "Please input a valid end time.(e.g 08:00)";
+            errors["end"] = "Va rugam adaugati o ora valida.(exemplu 08:00)";
             isValid = false;
         }
 
         if(phoneRegEx.test(medic.Phone) === false){
-            errors["phone"] = "Please add a valid phone number!";
+            errors["phone"] = "Va rugam adaugati un numar de telefon valid!";
             isValid = false;
         }
 
@@ -129,17 +129,20 @@ export class ProfilePage extends Component{
         {
             return;
         }
-
+        console.log("Medic program",medic.Schedule)
         await medicService.UpdateMedic(medic).then(medic => this.setState({successUpdate:true}))
                 .catch(err => {
                     this.setState({successUpdate:false});
                     console.error("Error caught ",err);
                 });
         let user = auth().currentUser;
-        user.updateEmail(medic.Email).then(() => {
-            console.log("Authentication mail updated.");
-        }).catch(err => console.error("Error updating email: ",err));
-        console.log("Setting edit to true.")
+        if(medic.Email !== user.email)
+        {
+            user.updateEmail(medic.Email).then(() => {
+                console.log("Authentication mail updated.");
+            }).catch(err => console.error("Error updating email: ",err));
+            console.log("Setting edit to true.")
+        }
         this.setState({edit:true});
     }
 
@@ -290,7 +293,7 @@ export class ProfilePage extends Component{
                             <div className="card-body">
                                 <div className="px-xl-3">
                                 <Link to="/Logout"><button className="btn btn-block btn-secondary" >
-                                    <FontAwesomeIcon icon={faSignOutAlt} size="lg"/><span> Logout</span>
+                                    <FontAwesomeIcon icon={faSignOutAlt} size="lg"/><span> Iesire</span>
                                 </button>
                                 </Link>
                                 </div>
@@ -306,7 +309,7 @@ export class ProfilePage extends Component{
     render() {
         let modalClose = () => this.setState({showPhotoModal:false})
         let medicContent = (this.state.medicLogged !== null) ? this.renderMedicProfile() : "";
-        let alert = (this.state.successUpdate) ? <Alert variant="success" onClose={() => this.setState({successUpdate:false})} dismissible dismissible>Update succesful!</Alert> : "";
+        let alert = (this.state.successUpdate) ? <Alert variant="success" onClose={() => this.setState({successUpdate:false})} dismissible dismissible>Actualizare efectuata cu succes!</Alert> : "";
         return(
             <div>
                 {alert}
@@ -348,21 +351,21 @@ export class PhotoChange extends Component{
         return(
             <Modal {...this.props} dialogClassName="profilePhotoModal">
             <Modal.Header closeButton>
-            <Modal.Title>Choose a photo...</Modal.Title>
+            <Modal.Title>Alegeti o fotografie...</Modal.Title>
             </Modal.Header>
             <Modal.Body>
             <div class="custom-file">
                 <input type="file" class="custom-file-input" name="Photo" id="customFile" onChange={this.handleChangePhoto}/>
                 <label class="custom-file-label" for="customFile">{(this.state.photo !== null) ?  this.state.photo.name 
-                                    : "Choose Photo..."}</label>
+                                    : "Alegeti fotografie..."}</label>
             </div>
             </Modal.Body>
             <Modal.Footer>
             <Button variant="secondary" onClick={this.props.onHide} >
-                Close
+                Inchide
             </Button>
             <Button variant="primary" onClick={this.handleSave}>
-                Save
+                Salveaza
             </Button>
             </Modal.Footer>
         </Modal>

@@ -29,6 +29,7 @@ namespace VetClientMobileApp.Activities
         private FirebaseFirestore _firestoreDb;
         private ListView invoicesList;
         private List<Invoice> invoices;
+        private ProgressDialog progress;
         public ClientInvoicesActivity()
         {
             _userService = new UserService();
@@ -45,6 +46,12 @@ namespace VetClientMobileApp.Activities
 
             
             invoicesList = FindViewById<ListView>(Resource.Id.lstView_Invoices);
+            progress = new ProgressDialog(this);
+            progress.Indeterminate = false;
+            progress.SetProgressStyle(Android.App.ProgressDialogStyle.Spinner);
+            progress.SetMessage("Se afiseaza facturile...");
+            progress.SetCancelable(false);
+            progress.Show();
             GetInvoicesNames();
         }
 
@@ -90,11 +97,14 @@ namespace VetClientMobileApp.Activities
                 }
                 invoicesList.Adapter = new InvoiceAdapter(this, invoices.ToArray());
                 invoicesList.ItemClick += InvoicesList_ItemClick;
+                
             }
+            progress.Dismiss();
         }
 
         private async void InvoicesList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
+            Console.WriteLine("Item Clicked");
             string invoiceName = invoices[e.Position].InvoiceName;
             var url = await firebaseStorage.Reference.Child(clientLogged.Id).Child(invoiceName).GetDownloadUrlAsync();
             var downloadRes = DownloadInvoice(this, url, invoiceName);

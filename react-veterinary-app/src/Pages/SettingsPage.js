@@ -1,8 +1,6 @@
 import React,{ Component } from 'react';
 import { medicService } from '../services/medic.service';
-import { Table, Button, Card } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash,faEdit,faPlusCircle} from '@fortawesome/free-solid-svg-icons';
+import { Button, Card } from 'react-bootstrap';
 import MaterialTable from 'material-table';
 
 
@@ -12,9 +10,9 @@ export class Settings extends Component{
         this.state={
             appointmentTypes:[],
             columnsHeader: [
-                {title: 'Type' ,field: 'type'},
-                {title:'Duration(minutes)',field:'duration',type:'numeric'},
-                {title:'Price(euro)',field:'price',type:'numeric'}
+                {title: 'Tip' ,field: 'type'},
+                {title:'Durata(minute)',field:'duration',type:'numeric'},
+                {title:'Pret(lei)',field:'price',type:'numeric'}
             ],
             renderServices:true, // if renderServices is falls it will render the Inventory table
             categories:[],
@@ -34,49 +32,13 @@ export class Settings extends Component{
         await medicService.getCategories().then(categories => this.setState({categories:categories}));
     }
 
-    renderSettingsTable(){
-        return(
-            <Table striped bordered hover>
-            <caption>List of services</caption>
-            <thead>
-                <tr>
-                    <th scope="col">Type</th>
-                    <th scope="col">Duration(minutes)</th>
-                    <th scope="col">
-                        <Button data-toggle="modal" variant="secondary">
-                            <FontAwesomeIcon icon={faPlusCircle}/>
-                            <span> Add new service</span>
-                        </Button>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                {this.state.appointmentTypes.map(appointmentType =>
-                    <tr>
-                        <td>{appointmentType.Type}</td>
-                        <td>{appointmentType.Duration}</td>
-                        <td>
-                        <button className="btn" title="Edit" data-toggle="modal" data-target="#editModal"
-                            ><FontAwesomeIcon icon={faEdit} color="blue"/>
-                        </button> 
-                        <button className="btn" title="Delete" data-toggle="modal" data-target="#deleteModal" 
-                            ><FontAwesomeIcon icon={faTrash} color="red"/>
-                        </button> 
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-            </Table>
-        )
-    }
-
     renderInventoryTable(){
         const columns = [
-            {title: 'Category' ,field: 'category'},
+            {title: 'Categorie' ,field: 'category'},
         ];
         return(
             <MaterialTable
-            title="Categories"
+            title="Categorii"
             columns={columns}
             data={this.state.categories}
             editable={{
@@ -112,7 +74,7 @@ export class Settings extends Component{
         console.log(this.state.appointmentTypes);
         return(
             <MaterialTable
-                title="Services"
+                title="Servicii"
                 columns={this.state.columnsHeader}
                 data={this.state.appointmentTypes}
                 editable={{
@@ -170,22 +132,22 @@ export class Settings extends Component{
                     <div className="col-md-3">
                         <Card>
                             <Card.Header>
-                                <Card.Title>Options</Card.Title>
+                                <Card.Title>Optiuni</Card.Title>
                             </Card.Header>
                             <Card.Body>
                                 <div className="row justify-content-md-center" style={{marginBottom:'5%'}}>    
                                     <Button variant="secondary" name="services" onClick={(e) => this.handleClick(e)}>
-                                        Services
+                                        Servicii
                                     </Button>
                                 </div>
                                 <div className="row justify-content-md-center">
                                     <Button variant="secondary" name="inventory" onClick={(e) => this.handleClick(e)}>
-                                        Inventory categories
+                                        Categorii inventar
                                     </Button>
                                 </div>
                             </Card.Body>
                             <Card.Footer>
-                                <Card.Text>Select one of those buttons to edit the afferent table.</Card.Text>
+                                <Card.Text>Selectati unul dintre butoane pentru a edita tabelul aferent.</Card.Text>
                             </Card.Footer>
                         </Card>
                     </div>

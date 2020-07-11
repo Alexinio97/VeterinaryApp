@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
@@ -30,7 +30,6 @@
         android:textStyle="bold"
         android:layout_marginTop="20dp"
         android:layout_gravity="center_horizontal"
-        android:text="ceva foarte lung"
         />
     </android.support.v7.widget.CardView>
 </LinearLayout >

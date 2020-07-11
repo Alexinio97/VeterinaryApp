@@ -208,7 +208,7 @@ renderAnimalsData(animals) {
 
     return (
       <div>
-        <h1 id="tabelLabel" >Animalele detinute de {this.props.match.params.clientName}</h1>
+        <h1 id="tabelLabel" >Animalele detinute de {this.props.match.params.clientName.replace("_"," ")}</h1>
         <div className="search">
           <TextField placeholder="Cauta..." className="col-3" value={this.state.animalSearched} onChange={this.handleSearch}></TextField>
         </div>

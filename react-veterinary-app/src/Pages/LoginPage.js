@@ -117,7 +117,7 @@ export class LoginPage extends Component {
             <div className="align-self-center">
             {(this.state.showAlert) ? this.displayAlert() : ""}
                 <Card style={{width: "30rem",display: "flex",align: "center",justifyContent: "center",marginLeft: "auto",marginRight:"auto",marginTop: "15%"}}>
-                <Card.Header className="card-title text-center mb-4 mt-1"><h4>Sign in</h4></Card.Header>
+                <Card.Header className="card-title text-center mb-4 mt-1"><h4>Autentificare</h4></Card.Header>
                 <Card.Body>
                     <form name="form" onSubmit={(event) => { this.handleSubmit(event) }} ref={(form) => { this.loginForm = form }}>
                         <div className={'form-group' + (submitted && !email ? ' has-error' : '')}>
@@ -143,7 +143,7 @@ export class LoginPage extends Component {
                             }
                         </div>
                         <div className="form-group">
-                            <button className="btn btn-primary" disabled={loading}>Login</button>
+                            <button className="btn btn-primary" disabled={loading}>Autentificare</button>
                             {loading &&
                                 <Spinner animation="border" variant="primary"></Spinner>
                             }

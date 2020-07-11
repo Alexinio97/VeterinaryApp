@@ -22,6 +22,7 @@ namespace VetClientMobileApp.Adapter
         Invoice[] _invoices;
         Activity _context;
         ImageButton deleteInvoice;
+        bool _isShowed = false;
         public InvoiceAdapter(Activity context, Invoice[] invoices)
         {
             _context = context;
@@ -47,6 +48,8 @@ namespace VetClientMobileApp.Adapter
 
             var invoiceToDelete = _invoices[position].Id;
             deleteInvoice.SetTag(deleteInvoice.Id, invoiceToDelete);
+            deleteInvoice.SetFocusable(ViewFocusability.NotFocusable);
+            deleteInvoice.FocusableInTouchMode = false;
             deleteInvoice.Click += DeleteInvoice_Click; ;
             return view;
         }
@@ -66,35 +69,42 @@ namespace VetClientMobileApp.Adapter
             completionListener.Succes += CompletionListener_Succes;
             completionListener.Failure += CompletionListener_Failure;
 
+            
 
             var deleteInvoiceAlert = new AlertDialog.Builder(_context);
-            deleteInvoiceAlert.SetTitle("Stergeti factura");
-            deleteInvoiceAlert.SetMessage($"Sunteti sigur ca doriti sa stergeti aceasta factura?");
-            deleteInvoiceAlert.SetPositiveButton("Da", async delegate {
-                StorageService storage = new StorageService();
-                var clientLogged = await storage.GetClientDataLocal();
-                firestoreDb.Collection("Medics").Document(clientLogged.MedicSubscribed.Id).Collection("Clients").Document(clientLogged.Id).Collection("Invoices")
-                .Document(invoiceId.ToString())
-                .Delete().AddOnSuccessListener(completionListener).AddOnFailureListener(completionListener);
-                
-                // delete invoice also from list
-                List<Invoice> invoicesList = _invoices.ToList<Invoice>();
-                var invoiceToDelete = invoicesList.FirstOrDefault(appoint => appoint.Id.Equals(invoiceId.ToString()));
-                // delete invoice from storage also
-                await firebaseStorage.Reference.Child(clientLogged.Id).Child(invoiceToDelete.InvoiceName).DeleteAsync();
-                invoicesList.Remove(invoiceToDelete);
-
-                _invoices = invoicesList.ToArray();
-                deleteInvoiceAlert.Dispose();
-                _context.Finish();
-                _context.StartActivity(typeof(ClientInvoicesActivity));
-                return;
-            });
-            deleteInvoiceAlert.SetNegativeButton("Nu", delegate
+            if (_isShowed != true)
             {
-                deleteInvoiceAlert.Dispose();
-            });
-            deleteInvoiceAlert.Show();
+                _isShowed = true;
+                deleteInvoiceAlert.SetTitle("Stergeti factura");
+                deleteInvoiceAlert.SetMessage($"Sunteti sigur ca doriti sa stergeti aceasta factura?");
+                deleteInvoiceAlert.SetPositiveButton("Da", async delegate
+                {
+                    StorageService storage = new StorageService();
+                    var clientLogged = await storage.GetClientDataLocal();
+                    firestoreDb.Collection("Medics").Document(clientLogged.MedicSubscribed.Id).Collection("Clients").Document(clientLogged.Id).Collection("Invoices")
+                    .Document(invoiceId.ToString())
+                    .Delete().AddOnSuccessListener(completionListener).AddOnFailureListener(completionListener);
+
+                    // delete invoice also from list
+                    List<Invoice> invoicesList = _invoices.ToList<Invoice>();
+                    var invoiceToDelete = invoicesList.FirstOrDefault(appoint => appoint.Id.Equals(invoiceId.ToString()));
+                    // delete invoice from storage also
+                    await firebaseStorage.Reference.Child(clientLogged.Id).Child(invoiceToDelete.InvoiceName).DeleteAsync();
+                    invoicesList.Remove(invoiceToDelete);
+
+                    _invoices = invoicesList.ToArray();
+                    _isShowed = false;
+                    deleteInvoiceAlert.Dispose();
+                    _context.Finish();
+                    _context.StartActivity(typeof(ClientInvoicesActivity));
+                });
+                deleteInvoiceAlert.SetNegativeButton("Nu", delegate
+                {
+                    _isShowed = false;
+                    deleteInvoiceAlert.Dispose();
+                });
+                deleteInvoiceAlert.Show();
+            }
         }
 
         private void CompletionListener_Failure(object sender, EventArgs e)

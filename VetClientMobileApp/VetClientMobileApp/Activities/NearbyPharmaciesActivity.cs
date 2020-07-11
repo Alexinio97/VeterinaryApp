@@ -29,17 +29,19 @@ namespace VetClientMobileApp.Activities
         public async void OnMapReady(GoogleMap googleMap)
         {
             var location = await Geolocation.GetLastKnownLocationAsync();
+            double defaultLatitude = 45.768203;
+            double defaultLongitude = 21.226415;
             if(location != null)
             {
                 MarkerOptions markerOptions = new MarkerOptions();
-                markerOptions.SetPosition(new LatLng(location.Latitude, location.Longitude));
+                markerOptions.SetPosition(new LatLng(defaultLatitude, defaultLongitude));
                 markerOptions.SetTitle("Pozitia mea");
                 
                 markerOptions.SetIcon(BitmapDescriptorFactory.DefaultMarker(BitmapDescriptorFactory.HueBlue));
                 googleMap.AddMarker(markerOptions);
                 googleMap.UiSettings.ZoomControlsEnabled = true;
                 googleMap.MoveCamera(CameraUpdateFactory.NewLatLngZoom(markerOptions.Position,14));
-                var places = await GetNearByPlacesAsync(location.Longitude, location.Latitude);
+                var places = await GetNearByPlacesAsync(defaultLongitude, defaultLatitude);
 
                 foreach (var place in places.results)
                 {
@@ -72,8 +74,8 @@ namespace VetClientMobileApp.Activities
             string latitudeS = latitude.ToString(In);
             sb.Append("location=" + latitudeS + "," + longitudeS);
             sb.Append("&radius=2500");
-            sb.Append("&types=veterinary_care");
-            sb.Append("&sensor=true");
+            sb.Append("&types=pet_store");
+            sb.Append("&sensor=true"); 
             sb.Append("&key=AIzaSyAduCbrlu_X6NOrqm80BPItdtGcmZAviYQ");
 
 

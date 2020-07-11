@@ -4,8 +4,6 @@ import {auth} from 'firebase';
 import { format, fromUnixTime } from 'date-fns';
 import { Card, Form, Col, Button, Modal, Toast } from 'react-bootstrap';
 import '../components/stylingComponents/Appointments.css';
-import { faTimesCircle} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { PopoverHeader, PopoverBody,Popover } from 'reactstrap';
 import { Document,StyleSheet,View,Text,PDFDownloadLink,Page, Image } from '@react-pdf/renderer';
 import logo from '../Logo.png';
@@ -422,7 +420,7 @@ export class HomePage extends Component {
                     {this.renderReceiptForm()}
                     {(this.state.receiptData !== null) ?
                         <PDFDownloadLink className="col-sm" document={<Receipt data={this.state.receiptData} />} 
-                                fileName="test">
+                                fileName="Reteta">
                             {({ blob, url, loading, error }) => (loading ? 'Incarcare document...' : 'Descarca acum!')}
                         </PDFDownloadLink> : ""
                     }
